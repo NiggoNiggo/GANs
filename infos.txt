@@ -1,0 +1,18 @@
+WGAN:
+	keine aktivierungsfunktion im letzten Layers des Disc -> dadurch Crit
+	training crit öfters
+
+Trick: Train Crit zum optimum und dann sind die Gradienten für das Gen training stabil und von höherer Qualität
+
+Nachteile:
+	-gradient clipping ist klein (bei vielen layers oder ohne batch norm) -> vanishing Gradients
+	-WGAN training instabil wenn Momentum nutzende Optimizer benutzt werden (z.B. Adam)
+
+Vorteile:
+	-Je öfters Crit traininert -> Zuverlässige Gradienten (weil Wasserstein fast überall differenzeibar ist)
+	-optimal trainierter Crit führt zu keinem Mode Collapse (durch n_crit training während dem training)
+	-wgan loss korreliert mit der Bildqualität
+	-stabileres Training
+
+
+WGAN + GP:

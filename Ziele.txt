@@ -1,0 +1,10 @@
+1. Allgemeine Klassen hibekommen, dass mit denen wieder dcgan trainiert werden kann.
+2. WGAN dann WGAN GP und das wie oben
+
+#jetzt kommentieren das GAN mehr vertehen und den Critic anpassen mal schauen wie das am besten geht
+
+
+3. GAN mit höherer Auflösung (progressly increasing GANS)
+4. WaveGAN und SpecGAN
+5. CycleGAN
+#### Dann neue Sachen
