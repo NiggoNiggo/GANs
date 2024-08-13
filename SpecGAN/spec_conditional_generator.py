@@ -6,9 +6,9 @@ import torch
 class ConditionalSpecGenerator(nn.Module):
     def __init__(self,
                  num_layers:int,
-                 num_labels:int,
                  c:int,
-                 d:int):
+                 d:int,
+                 num_labels:int):
         super().__init__()
         self.d = d
         self.c = c
@@ -17,7 +17,7 @@ class ConditionalSpecGenerator(nn.Module):
         self.embedding = nn.Embedding(num_labels,num_labels)
         self.img_size = (128,128)
         layers = [
-        nn.Linear(100+num_labels,256*self.d),
+        nn.Linear(100+self.num_labels,256*self.d),
         nn.Unflatten(1, (16 * d, 4, 4)),
         nn.ReLU(True)
         ]
@@ -39,7 +39,9 @@ class ConditionalSpecGenerator(nn.Module):
         
     def forward(self,labels,noise):
         c = self.embedding(labels)
+        # print(c.shape,"embedded gen")
         x = torch.cat([noise, c], dim=1)
+        # print(x.shape,"concat gen")
         return self.model(x)
     
     def __repr__(self):

@@ -29,7 +29,7 @@ import subprocess
 
 subprocess.run([sys.executable,"Utils\parameters.py"])
     
-current_gan = "spec_cgan"
+current_gan = "wgan"
 if __name__ == "__main__":
     if current_gan in ["dcgan","wgan","cgan"]:
         params = load_parameters("dcgan_parameters.json")
@@ -164,27 +164,44 @@ if __name__ == "__main__":
 
 
     elif current_gan == "spec_cgan":
-        spec = ConditionalSpecGenerator(num_layers=5,d=64,c=1,num_labels=10)
-        disc = ConditionalSpecDiscriminator(num_layers=5,c=1,d=64,num_labels=10)
-        print(spec)
-        transform = SpecGANTransformer()
-        latent = torch.rand(1,100)
-        labels = torch.randint(0, 9, (1,))  # Zufällige Label
-        print(latent.shape,labels.shape)
-        x = spec(labels,latent)
-        print(x.shape)
-        y = disc(labels,x)
-        print(y.shape)
+        params = load_spec_params("specgan_conditional_parameters.json")
+        print(*params["Generator_params"].values())
+        gen = ConditionalSpecGenerator(*params["Generator_params"].values(),num_labels=10)
+        disc = ConditionalSpecDiscriminator(*params["Discriminator_params"].values(),num_labels=10)
+        print(gen,disc)
+
+        gen_optim = params["gen_optimizer"](params=gen.parameters(),
+                                            lr=params["lr"],
+                                            betas=params["betas"])
+        #init optimizers Discriminator
+        disc_optim = params["disc_optimizer"](params=disc.parameters(),
+                                            lr=params["lr"],
+                                            betas=params["betas"])
+    
+        data_loader = torch.utils.data.DataLoader(
+                                            dataset=params["Dataset"](*params["Dataset_params"].values()),
+                                            batch_size=params["batch_size"],
+                                            shuffle=True)
+        conditional_specgan = SpecGAN(gen=gen,
+                                disc=disc,
+                                optim_gen=gen_optim,
+                                optim_disc=disc_optim,
+                                dataloader=data_loader,
+                                params=params,
+                                device="cuda",
+                                name="mins_specgan_final",
+                                lam=params["lam"],
+                                n_critic=params["n_crit"],
+                                alpha=params["alpha"],
+                                betas=params["betas"],
+                                conditional=False,
+                                num_classes=10)
+        conditional_specgan.make_entire_training()
+        #muss mir die samples mit meinem preprocessing nnochmal anhören bevor ich die in das system schicke
+
+
     # FID validation für images
     
-    #Conditional GAN and Conditional SpecGAN wenn das klappt 
-    #hierfür muss ich nochmal paar Daten zusammenstellen
-    #erstmal nur cgan mit label für spektrogramme 
-    #später dann mit tempralen features? für DrumGAN
-    
-    #hierfpr dann cgan als erweiterung in die Trainingsklassen implementieren,
-    #dass hierfür nicht jedes mal ein weiteres File benötigt wird,
-    #dann muss das dataset angepasst werden, dass es die labels mit rausgibt
     
     
     # 1 euro von krombacher auszahlen lassen

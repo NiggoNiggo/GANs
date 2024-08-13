@@ -29,14 +29,14 @@ specgan_dict = {
     "transform":"SpecGANTransformer",
     "transform_params":{
         "n_fft":256,
-        "win_length":128,
+        "win_length":256,
         "hop:length":128,
-        "target_length":16156,
+        "target_length":128,#16384
         "target_freq_bins":128,
         "target_fs":16000
     },
     "sr":16000,
-    "Dataset":"MnistAudio",
+    "Dataset":"Dataset",
     "Dataset_params":{
         "path":r"F:\DataSets\Audio\MINST",
         "num_classes":10,
@@ -44,11 +44,11 @@ specgan_dict = {
     },
     "gen_optimizer":"optim.Adam",
     "disc_optimizer":"optim.Adam",
-    "epochs":10,
+    "epochs":75,
     "device":"cuda" if torch.cuda.is_available() else "cpu",
     "betas":(0.5,0.9),
     "data_path":r"F:\DataSets\Audio\MINST",
-    "batch_size":64,
+    "batch_size":32,
     "latent_space":100,
     "lr":1e-4,
     "img_size":128,
@@ -67,7 +67,7 @@ def load_parameters(filepath):
     params["Dataset"] = specgan_mapping[params["Dataset"]]
     params["gen_optimizer"] = specgan_mapping[params["gen_optimizer"]]
     params["disc_optimizer"] = specgan_mapping[params["disc_optimizer"]]
-    params["Dataset_params"]["transform"] = specgan_mapping[params["transform"]]
+    params["Dataset_params"]["transform"] = specgan_mapping[params["transform"]](*specgan_dict["transform_params"].values())
     
     return params
 
@@ -77,7 +77,7 @@ specgan_mapping = {
     "AudioDataset": AudioDataset,
     "optim.Adam": optim.Adam,
     "Dataset":MnistAudio,
-    "transform":SpecGANTransformer
+    "SpecGANTransformer":SpecGANTransformer
 }
 if __name__ == "__main__":
     with open('specgan_conditional_parameters.json', 'w') as f:

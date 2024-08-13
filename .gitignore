@@ -28,3 +28,9 @@
 /wgan_128
 /wgan_128_jellyfish
 /wgan_128_vangogh
+*.txt
+*.png
+*.jpg
+*.pkl
+*.wav
+*.pth

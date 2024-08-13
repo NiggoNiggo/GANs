@@ -21,7 +21,8 @@ class GanBase(object):
                  params:dict,
                  device:str,
                  name:str,
-                 conditional:bool=False):
+                 conditional:bool=False,
+                 num_classes:int=0):
         """Base class for Gan training. train_one_epoch has to be implementet to adapt the 
         training to a various gan training
         This should be able to make training for DCGAN, WGAN and CycleGAN
@@ -49,6 +50,8 @@ class GanBase(object):
         conditional : bool default False
             if True the system is trained with conditonal networks, You only have to update the 
             dataset the models are changes dynamaiclly
+        num_classes : int
+            amount of classes if the GAN is conditional
         """
         self.gen = gen
         self.disc = disc
@@ -63,6 +66,7 @@ class GanBase(object):
         self._create_directory()
         self.start_epoch = 0
         self.conditional = conditional
+        self.num_classes = num_classes
         
 
     
@@ -73,7 +77,7 @@ class GanBase(object):
         """
         for epoch in range(self.start_epoch+1,self.params["epochs"]+self.start_epoch+1):
             self.epoch = epoch
-            self.train_one_epoch(self.conditional)
+            self.train_one_epoch()
             self.save_models()
         self.plot_loss()
     

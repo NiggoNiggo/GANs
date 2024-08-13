@@ -1,9 +1,10 @@
 import torchaudio.transforms as T
-import torchvision.transforms as F
+import torch.nn.functional as F
 import torch
 
 class SpecGANTransformer:
     def __init__(self, n_fft, win_length, hop_length, target_length, target_freq_bins,target_fs):
+        print(type(n_fft))
         self.stft = T.Spectrogram(n_fft=n_fft, win_length=win_length, hop_length=hop_length, power=None)
         self.target_length = target_length
         self.target_freq_bins = target_freq_bins

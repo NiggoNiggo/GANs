@@ -21,8 +21,10 @@ class WGAN(GanBase):
                  alpha=0.0001,
                  betas:tuple=(0,0.9),
                  loss_fn=None,
+                 conditional=False,
+                 num_classes:int=0
                  ):
-        super().__init__(gen,disc,optim_gen,optim_disc,loss_fn,dataloader,params,device,name)
+        super().__init__(gen,disc,optim_gen,optim_disc,loss_fn,dataloader,params,device,name,conditional=conditional,num_classes=num_classes)
         self.lam = lam
         self.n_critic = n_critic
         self.alpha = alpha
@@ -34,11 +36,15 @@ class WGAN(GanBase):
     
     def gradient_penalty(self,
                          real_sample,
-                         fake_sample):
+                         fake_sample,
+                         labels=None):
         alpha = torch.rand(real_sample.size(0),1,1,1,device=self.device)
         interpolates = (alpha * real_sample ) + ((1 - alpha)*fake_sample).requires_grad_(True)
         # interpolates.requires_grad_(True)
-        d_interpolates = self.disc(interpolates)
+        if labels is not None:
+            d_interpolates = self.disc(labels,interpolates)
+        else:
+            d_interpolates = self.disc(interpolates)
         # fake = torch.ones(real_sample.size(0), 1, device=self.device, requires_grad=False)
         # print(interpolates.shape,d_interpolates.shape,fake.shape)
         gradients = torch.autograd.grad(

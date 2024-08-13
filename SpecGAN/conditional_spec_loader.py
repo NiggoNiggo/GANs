@@ -2,6 +2,7 @@ import os
 import librosa
 import torchaudio.transforms as T
 import torchaudio
+import torch
 
 
 from torch.utils.data import Dataset
@@ -17,7 +18,6 @@ class MnistAudio(Dataset):
         self.num_classes = num_classes
         self.transforms = transforms
         self.data = {x:[] for x in range(num_classes)}#contains label and data disct{str:list}
-        print(self.data)
         self.load_data()
         
         
@@ -40,11 +40,12 @@ class MnistAudio(Dataset):
     def __getitem__(self,idx):
         all_data = [values for values in self.data.values()]
         all_data = [item for sublist in all_data for item in sublist]
-        print(all_data)
         current_file = all_data[idx]
         current_label = int(current_file.split("\\")[-1][0])
         data, fs = torchaudio.load(current_file)
-        return self.transforms(data)
+
+        data, label = self.transforms(data), torch.tensor(current_label)
+        return data, torch.tensor(label)
 
 
     def get_num_classes(self):
