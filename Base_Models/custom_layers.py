@@ -82,9 +82,9 @@ class DownscaleLayer(nn.Module):
         return activation_function
         
     def forward(self,x):
-        print(x.shape, "vorher")
+        # print(x.shape, "vorher")
         x = self.layers(x)
-        print(x.shape,"later")
+        # print(x.shape,"later")
         return x
     
 

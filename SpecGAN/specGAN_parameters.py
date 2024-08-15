@@ -37,24 +37,32 @@ specgan_dict = {
     },
     "sr":16000,
     "Dataset":"Dataset",
-    "Dataset_params":{
+    "Dataset_conditional_params":{
         "path":r"F:\DataSets\Audio\MINST",
         "num_classes":10,
-        "transform":"SpecGANTransformer"
+        "transform":"SpecGANTransformer",
+        "conditional":"True"
+    },
+    "Dataset_params":{
+        "path":r"F:\DataSets\Audio\MINST",
+        "num_classes":0,
+        "transform":"SpecGANTransformer",
+        "conditional":"False"
     },
     "gen_optimizer":"optim.Adam",
     "disc_optimizer":"optim.Adam",
-    "epochs":75,
+    "epochs":50,
     "device":"cuda" if torch.cuda.is_available() else "cpu",
     "betas":(0.5,0.9),
     "data_path":r"F:\DataSets\Audio\MINST",
-    "batch_size":32,
+    "batch_size":64,
     "latent_space":100,
-    "lr":1e-4,
+    "lr":1e-5,
     "img_size":128,
     "lam":10,
-    "n_crit":5,
+    "n_crit":2,
     "alpha":0.0001,
+    "dtype":"audio"
 }
 
 def load_parameters(filepath):
@@ -79,8 +87,10 @@ specgan_mapping = {
     "Dataset":MnistAudio,
     "SpecGANTransformer":SpecGANTransformer
 }
+
+
 if __name__ == "__main__":
-    with open('specgan_conditional_parameters.json', 'w') as f:
+    with open('specgan_parameters.json', 'w') as f:
         json.dump(specgan_dict, f)
         
 # utils paar bearbeitungsfunktionen machen und dann hier eingeben

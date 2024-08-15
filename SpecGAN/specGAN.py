@@ -39,7 +39,7 @@ class SpecGAN(WGAN):
                          num_classes=num_classes)
         #hier die condition mit einbringen
     
-    def train_one_epoch(self,conditional):
+    def train_one_epoch(self):
         #printe output von data loader
         for idx, data in tqdm(enumerate(self.data_loader)):
             self.disc.to(self.device)
@@ -61,15 +61,15 @@ class SpecGAN(WGAN):
                 else:
                     fake = self.gen(noise)
                 self.optim_disc.zero_grad()
-                if self.conditional:
+                if self.conditional == True:
                     fake_disc = self.disc(label,fake.detach())
                     real_disc = self.disc(label,real)
                 else:
-                    fake_disc = self.disc(label,fake.detach())
+                    fake_disc = self.disc(fake.detach())
                     # assert fake_disc.device == torch.device("cuda")
                     real_disc = self.disc(real)
                     # assert real_disc.device == torch.device("cuda")
-                if self.conditional:
+                if self.conditional == True:
                     gp = self.gradient_penalty(real,fake,label)
                 else:
                     gp = self.gradient_penalty(real,fake)
@@ -81,7 +81,7 @@ class SpecGAN(WGAN):
                 self.optim_disc.step()
             self.optim_gen.zero_grad()
             noise = torch.randn(batch_size, self.params["latent_space"], device=self.device)
-            if self.conditional:
+            if self.conditional == True:
                 fake_img = self.gen(label,noise)
             
                 fake_disc = self.disc(label,fake_img)
@@ -109,7 +109,7 @@ class SpecGAN(WGAN):
         image_path = os.path.join(self.name,"images")
         noise = torch.randn(self.params["batch_size"],self.params["latent_space"],device=self.device)
         with torch.no_grad():
-            if self.conditional:
+            if self.conditional == True:
                 label = torch.randint(0,self.num_classes,(self.params["batch_size"],),device=self.device)
                 fake = self.gen(label,noise).detach().cpu()
             else:
@@ -129,13 +129,13 @@ class SpecGAN(WGAN):
         
         
         with torch.no_grad():
-            if self.conditional:
+            if self.conditional == True:
                 noise = torch.randn(self.num_classes, self.params["latent_space"], device=self.device)
                 # Erzeuge zufällige Labels für eine einzelne Klasse
                 label = torch.randint(0, self.num_classes, (self.num_classes,), device=self.device)
                 fake = self.gen(label, noise).detach().cpu()
             else:
-                noise = torch.rands(4,self.params["latent_space"],device=self.device)
+                noise = torch.randn(4,self.params["latent_space"],device=self.device)
                 fake = self.gen(noise).detach().cpu()
             for idx in range(fake.size(0)):
                 gen_spec = np.squeeze(fake[idx],(0,1))

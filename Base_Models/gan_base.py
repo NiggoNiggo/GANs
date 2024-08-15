@@ -63,10 +63,12 @@ class GanBase(object):
         self.device = torch.device("cuda" if device == "cuda" else "cpu")
         self.name = name
         self.loss_values = {}#contains los values for variable nums of gens and disc
+        self.save_path = r"C:\Users\analf\Desktop\Datasets_And_Results\Results\GANS"
         self._create_directory()
         self.start_epoch = 0
         self.conditional = conditional
         self.num_classes = num_classes
+        
         
 
     
@@ -75,10 +77,19 @@ class GanBase(object):
         has to be implementet because, this function just call self.train_one_epoch in the range of 
         self.params["epochs]. As well some statistic functions are called and saved during the training
         """
-        for epoch in range(self.start_epoch+1,self.params["epochs"]+self.start_epoch+1):
+        #range from epochs to make the training
+        epoch_range = range(self.start_epoch+1,self.params["epochs"]+self.start_epoch+1)
+        #device how often a model should be saved
+        if len(epoch_range) <20:
+            self.save_step = 5
+        elif len(epoch_range) > 20 and len(epoch_range)< 50:
+            self.save_step = 10
+        elif len(epoch_range) > 50:
+            self.save_step = 20
+        self.last_epoch = epoch_range[-1]
+        for epoch in epoch_range:
             self.epoch = epoch
             self.train_one_epoch()
-            self.save_models()
         self.plot_loss()
     
     def train_one_epoch(self,conditional:bool):
@@ -97,21 +108,6 @@ class GanBase(object):
         """
         raise NotImplementedError
 
-    def train_one_epoch_conditional(self):
-        """Method has to be overwritten for every single Gan implementation
-        The returns of this Method have to be the loss of one Epoch.
-        This is the training routine for exactly one epoch in a conditional GAN.
-
-        Returns
-        ------
-        Loss values of the specific GAN
-
-        Raises
-        ------
-        NotImplementedError
-            Has to be overwritten in order to train a conditional Gan
-        """
-        raise NotImplementedError
 
 
     def validate_model(self):
@@ -129,13 +125,15 @@ class GanBase(object):
         """Create a folder system to organize all saved models and images ind different folders
         This Method runs automaticly in the init function"""
         #make dir for the given name
-        # path = os.path.join(r"D:\test",self.name)
-        os.makedirs(self.name,exist_ok=True)
+        os.makedirs(os.path.join(self.save_path,self.name),exist_ok=True)
         #list all needed folders
-        dirs = ["models","images"]
+        if self.params["dtype"] == "audio":
+            dirs = ["models","images","audio"]
+        else:
+            dirs = ["models","images"]
         #create folder for every listet folder
         for folder in dirs:
-            os.makedirs(os.path.join(self.name,folder),exist_ok=True)
+            os.makedirs(os.path.join(self.save_path,self.name,folder),exist_ok=True)
     
     def print_stats(self, **kwargs):
         """Method to print a informational String, after every Epoch. This function take just 
@@ -169,15 +167,16 @@ class GanBase(object):
         
         """
         #save the path to the models
-        model_path = os.path.join(self.name,"models")
+        model_path = os.path.join(self.save_path,self.name,"models")
         for model in args:
             #hier noch ne Abfrage ob der Type richtig ist
             filename = f"{model.__repr__()}epoch_{self.epoch}.pth"
+            print(filename)
             torch.save(model.state_dict(),os.path.join(model_path,filename))
     
     def predict(self,epoch):
         #save path to the image folder
-        image_path = os.path.join(self.name,"images")
+        image_path = os.path.join(self.save_path,self.name,"images")
         noise = torch.randn(self.params["batch_size"],self.params["latent_space"],1,1,device=self.device)
         with torch.no_grad():
             fake = self.gen(noise).detach().cpu()
@@ -223,7 +222,7 @@ class GanBase(object):
         
     def make_gif(self,output_path:str,duration=500):
         all_images = []
-        for filename in sorted(os.listdir(os.path.join(self.name,"images"))):
+        for filename in sorted(os.listdir(os.path.join(self.save_path,self.name,"images"))):
             if filename.endswith(".png") or filename.endswith(".jpg") and filename != "Loss_Plot.png":
                 image_path = os.path.join(self.name, "images", filename)
                 image = Image.open(image_path)
@@ -236,7 +235,7 @@ class GanBase(object):
                 img = Image.frombytes('RGB', fig.canvas.get_width_height(), fig.canvas.tostring_rgb())
                 all_images.append(img)
                 plt.close(fig)
-                
+        output_path = os.path.join(self.save_path,output_path)
         all_images[0].save(output_path, save_all=True, append_images=all_images[1:], duration=duration, loop=0)
         print(f"GIF saved as {output_path}")
         
@@ -258,7 +257,7 @@ class GanBase(object):
         
         """
         #get correct path
-        path = os.path.join(self.name,"models")
+        path = os.path.join(self.save_path,self.name,"models")
         #list all models
         all_models = os.listdir(path)
         
@@ -286,7 +285,7 @@ class GanBase(object):
                 # model == Model Class like Discriminator Generator or something similar
                 if half_name in repr(model) and half_name in filename:
                     #load the model
-                    model.load_state_dict(torch.load(os.path.join(self.name,"models",filename)))
+                    model.load_state_dict(torch.load(os.path.join(self.save_path,self.name,"models",filename), weights_only=True))
         #return epoch from filename
         try:
             match = re.search(r"\d+", filename)

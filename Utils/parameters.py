@@ -57,7 +57,8 @@ dcgan_dict = {
     "lam":10,
     "n_crit":5,
     "alpha":0.0001,
-    "betas_wgan":(0,0.9)
+    "betas_wgan":(0,0.9),
+    "dtype":"image"
 }
 
 def load_parameters(filepath):

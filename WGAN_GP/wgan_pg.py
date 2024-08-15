@@ -97,7 +97,8 @@ class WGAN(GanBase):
             #append loss to loss dictionary
             self.loss_values["loss_d"].append(loss_d)
             self.loss_values["loss_g"].append(fake_loss)
-        self.save_models(self.gen,self.disc)
+        print(self.save_step)
+        if self.save_step % self.epoch == 0 or self.last_epoch == self.epoch:
+            print("save model now")
+            self.save_models(self.gen,self.disc)
         
-                
-    

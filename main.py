@@ -28,6 +28,7 @@ from SpecGAN.spec_conditional_discriminator import ConditionalSpecDiscriminator
 import subprocess
 
 subprocess.run([sys.executable,"Utils\parameters.py"])
+subprocess.run([sys.executable,"SpecGAN\specGAN_parameters.py"])
     
 current_gan = "wgan"
 if __name__ == "__main__":
@@ -91,7 +92,7 @@ if __name__ == "__main__":
                         betas=params["betas_wgan"])
             wgan.print_summary(gen=wgan.gen,disc=wgan.disc)
             name_gen, name_disc = repr(gen), repr(crit)
-            # wgan.load_models(name_gen=gen,name_disc=crit)
+            wgan.load_models(name_gen=gen,name_disc=crit)
           
             
             # wgan.make_gif("cat_wgan.gif")
@@ -133,9 +134,9 @@ if __name__ == "__main__":
         disc_optim = params["disc_optimizer"](params=disc.parameters(),
                                             lr=params["lr"],
                                             betas=params["betas"])
-    
+        print(*params["Dataset_params"].values())
         data_loader = torch.utils.data.DataLoader(
-                                            dataset=params["Dataset"](params["data_path"]),
+                                            dataset=params["Dataset"](*params["Dataset_params"].values()),
                                             batch_size=params["batch_size"],
                                             shuffle=True)
         x = next(iter(data_loader))
@@ -149,7 +150,7 @@ if __name__ == "__main__":
                     dataloader=data_loader,
                     params=params,
                     device="cuda",
-                    name="specgan_drums",
+                    name="specgan_minst",
                     lam=params["lam"],
                     n_critic=params["n_crit"],
                     alpha=params["alpha"],
@@ -179,7 +180,7 @@ if __name__ == "__main__":
                                             betas=params["betas"])
     
         data_loader = torch.utils.data.DataLoader(
-                                            dataset=params["Dataset"](*params["Dataset_params"].values()),
+                                            dataset=params["Dataset"](*params["Dataset_conditional_params"].values()),
                                             batch_size=params["batch_size"],
                                             shuffle=True)
         conditional_specgan = SpecGAN(gen=gen,
@@ -200,8 +201,19 @@ if __name__ == "__main__":
         #muss mir die samples mit meinem preprocessing nnochmal anhören bevor ich die in das system schicke
 
 
+# lr niedrige n_critic geriner und batchsize geringer
+#specgan und condtional specgan muss ich zum laufen bekommen
+
     # FID validation für images
     
+
+
+
+
+
+# lustige befehle in der tastaur mit anderen Lichteffekten machen 
+
+
     
     
     # 1 euro von krombacher auszahlen lassen
