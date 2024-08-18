@@ -38,29 +38,29 @@ specgan_dict = {
     "sr":16000,
     "Dataset":"Dataset",
     "Dataset_conditional_params":{
-        "path":r"F:\DataSets\Audio\MINST",
+        "path":r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\MINST",
         "num_classes":10,
         "transform":"SpecGANTransformer",
         "conditional":"True"
     },
     "Dataset_params":{
-        "path":r"F:\DataSets\Audio\MINST",
+        "path":r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\MINST",
         "num_classes":0,
         "transform":"SpecGANTransformer",
         "conditional":"False"
     },
     "gen_optimizer":"optim.Adam",
     "disc_optimizer":"optim.Adam",
-    "epochs":50,
+    "epochs":75,
     "device":"cuda" if torch.cuda.is_available() else "cpu",
     "betas":(0.5,0.9),
-    "data_path":r"F:\DataSets\Audio\MINST",
+    "data_path":r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\MINST",
     "batch_size":64,
     "latent_space":100,
-    "lr":1e-5,
+    "lr":1e-4,
     "img_size":128,
     "lam":10,
-    "n_crit":2,
+    "n_crit":5,
     "alpha":0.0001,
     "dtype":"audio"
 }

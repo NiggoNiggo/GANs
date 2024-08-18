@@ -60,7 +60,7 @@ class GanBase(object):
         self.loss_fn = loss_fn
         self.data_loader = dataloader
         self.params = params
-        self.device = torch.device("cuda" if device == "cuda" else "cpu")
+        self.device = torch.device("cuda" if self.params["device"] == "cuda" else "cpu")
         self.name = name
         self.loss_values = {}#contains los values for variable nums of gens and disc
         self.save_path = r"C:\Users\analf\Desktop\Datasets_And_Results\Results\GANS"
@@ -68,9 +68,29 @@ class GanBase(object):
         self.start_epoch = 0
         self.conditional = conditional
         self.num_classes = num_classes
-        
-        
+    
+    def make_noise(self,batch_size:int)->torch.tensor:
+        """makes a latent noise vector as input of the generator
+        it decides the shape of the vector with respect to the 
+        datatype specified in self.params["dtype"]
 
+        Parameters
+        ----------
+        batch_size : int
+            batch_size 
+
+        Returns
+        -------
+        torch.tensor
+            latent space vector
+        """
+        # if data is image
+        if self.params["dtype"] == "image":
+            return torch.randn(batch_size,self.params["latent_space"],1,1,device=self.device)
+        # if data is audio 
+        elif self.params["dtype"] == "audio":
+            return torch.randn(batch_size,self.params["latent_space"],device=self.device)
+            
     
     def make_entire_training(self):
         """Method to compute the full training routine for a GAN. To use this method self.train_one_epoch 
@@ -79,17 +99,11 @@ class GanBase(object):
         """
         #range from epochs to make the training
         epoch_range = range(self.start_epoch+1,self.params["epochs"]+self.start_epoch+1)
-        #device how often a model should be saved
-        if len(epoch_range) <20:
-            self.save_step = 5
-        elif len(epoch_range) > 20 and len(epoch_range)< 50:
-            self.save_step = 10
-        elif len(epoch_range) > 50:
-            self.save_step = 20
-        self.last_epoch = epoch_range[-1]
         for epoch in epoch_range:
             self.epoch = epoch
             self.train_one_epoch()
+            if epoch == len(epoch_range)-1:
+                self.save_models(self.gen,self.disc)
         self.plot_loss()
     
     def train_one_epoch(self,conditional:bool):
@@ -171,7 +185,6 @@ class GanBase(object):
         for model in args:
             #hier noch ne Abfrage ob der Type richtig ist
             filename = f"{model.__repr__()}epoch_{self.epoch}.pth"
-            print(filename)
             torch.save(model.state_dict(),os.path.join(model_path,filename))
     
     def predict(self,epoch):
@@ -185,6 +198,7 @@ class GanBase(object):
     def print_summary(self,**kwargs):
         """Muss umgebaut werden, sobald nmehr gens oder disc dazu kommen
         print the summar of a  torch model 
+        kann über die repr() methode dann umgebaut werden
         """
         for arg in kwargs:
             if arg == "disc":

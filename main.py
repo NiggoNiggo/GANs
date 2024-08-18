@@ -9,12 +9,21 @@ from Base_Models.gan_base import GanBase
 from Base_Models.audio_transformer import SpecGANTransformer
 from Utils.parameters import load_parameters 
 from SpecGAN.specGAN_parameters import load_parameters as load_spec_params
+from Utils.utils import init_weights
+
 
 from SpecGAN.spec_generator import SpecGenerator
 from SpecGAN.specGAN import SpecGAN
 from SpecGAN.spec_discriminator import SpecDiscriminator
 from SpecGAN.spec_conditional_generator import ConditionalSpecGenerator
 from SpecGAN.spec_conditional_discriminator import ConditionalSpecDiscriminator
+
+
+from WaveGAN.wavegan_parameters import load_parameters as load_wave_params
+from WaveGAN.wave_discriminator import WaveDiscriminator
+from WaveGAN.wave_generator import WaveGenerator
+from WaveGAN.wavegan_dataset import WaveDataset
+from WaveGAN.waveGAN import WaveGAN
 
 # spec = SpecGenerator(64,1)
 # latent = torch.randn((1,100))
@@ -29,12 +38,14 @@ import subprocess
 
 subprocess.run([sys.executable,"Utils\parameters.py"])
 subprocess.run([sys.executable,"SpecGAN\specGAN_parameters.py"])
+# subprocess.run([sys.executable,"WaveGAN\waveGAN_parameters.py"])
     
-current_gan = "wgan"
+current_gan = "wavegan"
 if __name__ == "__main__":
     if current_gan in ["dcgan","wgan","cgan"]:
         params = load_parameters("dcgan_parameters.json")
         gen = params["Generator"](*params["Generator_params"].values()).to(params["device"])
+        gen.apply(init_weights)
         
         
         data_loader = torch.utils.data.DataLoader(
@@ -46,6 +57,7 @@ if __name__ == "__main__":
         
         if current_gan == "dcgan":
             disc = params["Discriminator"](*params["Discriminator_params"].values()).to(params["device"])
+            disc.apply(init_weights)
             gen_optim = params["gen_optimizer"](params=gen.parameters(),
                                                 lr=params["lr_dcgan"],
                                                 betas=params["betas_dcgan"])
@@ -68,6 +80,7 @@ if __name__ == "__main__":
     
         elif current_gan == "wgan":
             crit = params["Critiker"](*params["Discriminator_params"].values()).to(params["device"])
+            crit.apply(init_weights)
             # for layer in crit.model:
             #     print(layer)
             gen_optim = params["gen_optimizer"](params=gen.parameters(),
@@ -100,6 +113,7 @@ if __name__ == "__main__":
         
         if current_gan == "cgan":
             disc = params["Discriminator"](*params["Discriminator_params"].values()).to(params["device"])
+            disc.apply(init_weights)
             gen_optim = params["gen_optimizer"](params=gen.parameters(),
                                                 lr=params["lr_dcgan"],
                                                 betas=params["betas_dcgan"])
@@ -122,9 +136,12 @@ if __name__ == "__main__":
         
     elif current_gan == "specgan":
         params = load_spec_params("specgan_parameters.json")
-        print(params["device"])
         gen = params["Generator"](*params["Generator_params"].values()).to(params["device"])
         disc = params["Discriminator"](*params["Discriminator_params"].values()).to(params["device"])
+
+        #apply weights
+        gen.apply(init_weights)
+        disc.apply(init_weights)
 
             
         gen_optim = params["gen_optimizer"](params=gen.parameters(),
@@ -134,12 +151,18 @@ if __name__ == "__main__":
         disc_optim = params["disc_optimizer"](params=disc.parameters(),
                                             lr=params["lr"],
                                             betas=params["betas"])
-        print(*params["Dataset_params"].values())
         data_loader = torch.utils.data.DataLoader(
                                             dataset=params["Dataset"](*params["Dataset_params"].values()),
                                             batch_size=params["batch_size"],
-                                            shuffle=True)
-        x = next(iter(data_loader))
+                                            shuffle=True) 
+        # for idx in range(120):
+        #     x = next(iter(data_loader))
+        #     print(x.shape)
+        #     import matplotlib.pyplot as plt 
+        #     plt.figure(figsize=(10,4))
+        #     plt.imshow(x[0].squeeze(0).numpy())
+        #     plt.show()
+
         
     
         # print(x.shape)
@@ -150,7 +173,7 @@ if __name__ == "__main__":
                     dataloader=data_loader,
                     params=params,
                     device="cuda",
-                    name="specgan_minst",
+                    name="specgan_drums",
                     lam=params["lam"],
                     n_critic=params["n_crit"],
                     alpha=params["alpha"],
@@ -158,18 +181,22 @@ if __name__ == "__main__":
         # specgan.print_summary(gen=specgan.gen,disc=specgan.disc)
         name_gen, name_disc = repr(gen), repr(disc)
         specgan.load_models(name_gen=gen,name_disc=disc)
+        # specgan.print_summary(gen=gen,disc=disc)
         
         specgan.make_entire_training()
         # specgan.make_audio(8)
 
 
 
+
     elif current_gan == "spec_cgan":
         params = load_spec_params("specgan_conditional_parameters.json")
-        print(*params["Generator_params"].values())
         gen = ConditionalSpecGenerator(*params["Generator_params"].values(),num_labels=10)
         disc = ConditionalSpecDiscriminator(*params["Discriminator_params"].values(),num_labels=10)
-        print(gen,disc)
+
+        #apply weights
+        gen.apply(init_weights)
+        disc.apply(init_weights)
 
         gen_optim = params["gen_optimizer"](params=gen.parameters(),
                                             lr=params["lr"],
@@ -198,35 +225,79 @@ if __name__ == "__main__":
                                 conditional=False,
                                 num_classes=10)
         conditional_specgan.make_entire_training()
-        #muss mir die samples mit meinem preprocessing nnochmal anhören bevor ich die in das system schicke
+    
 
 
-# lr niedrige n_critic geriner und batchsize geringer
+    elif current_gan == "wavegan":
+        params = load_wave_params("wavegan_parameters.json")
+        gen = WaveGenerator(*params["Generator_params"].values()).to(params["device"])
+        disc = WaveDiscriminator(*params["Discriminator_params"].values()).to(params["device"])
+
+        #apply weights
+        gen.apply(init_weights)
+        disc.apply(init_weights)
+
+        gen_optim = params["gen_optimizer"](params=gen.parameters(),
+                                            lr=params["lr"],
+                                            betas=params["betas"])
+        #init optimizers Discriminator
+        disc_optim = params["disc_optimizer"](params=disc.parameters(),
+                                            lr=params["lr"],
+                                            betas=params["betas"])
+    
+        data_loader = torch.utils.data.DataLoader(
+                                            dataset=params["Dataset"](*params["Dataset_params"].values()),
+                                            batch_size=params["batch_size"],
+                                            shuffle=True)
+        wavegan = WaveGAN(gen=gen,
+                        disc=disc,
+                        optim_gen=gen_optim,
+                        optim_disc=disc_optim,
+                        dataloader=data_loader,
+                        params=params,
+                        device=params["device"],
+                        name="wavegan_drums",
+                        lam=params["lam"],
+                        n_critic=params["n_crit"],
+                        alpha=params["alpha"],
+                        betas=params["betas"],
+                        conditional=False,
+                        num_classes=0)
+        wavegan.make_entire_training()
+
+
+
+#mal bisschen die parameter bei den funktionsaufrufen überprüfen, dass dort etwas eingespart wird und nicht jedes mal der aufruf befehl so langfe ist 
+# beispiel devices ist nämlich in params mit drin
+
+
+#base klassen besser definiern um mehr code zu sparen 
+#insgesamt mal bisschen aufräumen
+
+
+# Audio preprocessing genauer für specgan anschauen und mal aufschreiben
+
+
 #specgan und condtional specgan muss ich zum laufen bekommen
 
-    # FID validation für images
-    
 
+#damm muss ich auuch mal das GAN für 128x128 fertig trainieren und ein richtiges CGAN machen
 
-
-
-
-# lustige befehle in der tastaur mit anderen Lichteffekten machen 
-
-
-    
     
     # 1 euro von krombacher auszahlen lassen
     
     #Drum GAN
-    #FACE GAN
+        #-> dafür brauche ich nochmal paar Samples aus Samplelib.db dafür müsste ich nochmnal eine pre processing pipline schreiben
     #SRGAchat
     #SRGAchaML
     
     
     
-    # dann wavegan
-    
+    # dann wavegan wird auf Arbeit gemacht 
+    #dann auch ein conditional wavegan implementieren 
     
 
-    #batchsize erhöhen
+
+    # hifigan und voice cloning mit tacotron machen. das das soll aber vorgeladen sein und auf eigene Aufnahmen trainiert werden
+    
+

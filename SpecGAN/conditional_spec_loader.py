@@ -19,7 +19,6 @@ class MnistAudio(Dataset):
         self.num_classes = num_classes
         self.transforms = transforms
         self.conditional = conditional
-        print(self.conditional)
         if self.conditional == True:
             self.data = {x:[] for x in range(num_classes)}#contains label and data disct{str:list}
         self.load_data()
@@ -30,9 +29,8 @@ class MnistAudio(Dataset):
     def load_data(self):
         self.all_files = []
         for r,d,f in os.walk(self.path):
-            self.all_files.extend([os.path.join(r,file) for file in f])
+            self.all_files.extend([os.path.join(r,file) for file in f if file.endswith(".wav")])
         if self.conditional == True: 
-            print("Treu:" , self.conditional)   
             for file in self.all_files:
                 #get first letter of the filename because it is the label
                 label = int(file.split("\\")[-1][0])
@@ -54,11 +52,12 @@ class MnistAudio(Dataset):
         else:
             all_data = self.all_files
         current_file = all_data[idx]
-        current_label = int(current_file.split("\\")[-1][0])
-        data, fs = torchaudio.load(current_file)
+        data, fs = librosa.load(path=current_file,sr=16000,mono=True)
 
-        data = self.transforms(data)
+        data = torch.from_numpy(data).unsqueeze(0)
+        data = self.transforms(data, fs)
         if self.conditional == True:
+            current_label = int(current_file.split("\\")[-1][0])
             label = torch.tensor(current_label)
 # mache mir hier einen plot des spektrogramms mit 1x128x128
             return data, label
@@ -82,7 +81,5 @@ class MnistAudio(Dataset):
 if __name__ == "__main__":
     dset = dataset = MnistAudio(path=r"F:\DataSets\Audio\MINST",
                                 num_classes=10,)
-    print(len(dset))
     loader = DataLoader(dataset,1,shuffle=True)
     x,y = next(iter(loader))
-    print(x,y)

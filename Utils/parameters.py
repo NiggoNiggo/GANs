@@ -44,7 +44,7 @@ dcgan_dict = {
     "loss_fn":"nn.BCELoss",
     "gen_optimizer":"optim.Adam",
     "disc_optimizer":"optim.Adam",
-    "epochs":60,
+    "epochs":10,
     "device":"cuda" if torch.cuda.is_available() else "cpu",
     "betas_dcgan":(0.5,0.999),
     "data_path":r"F:\DataSets\Images\Zebra",
