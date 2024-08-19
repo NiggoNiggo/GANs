@@ -31,7 +31,7 @@ wavegan_dict = {
     "sr":16000,
     "Dataset":"WaveDataset",
     "Dataset_params":{
-        "path":r"F:\DataSets\Audio\Drums",
+        "path":r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\MINST",
         "transform":"waveganTransformer"
     },
     "gen_optimizer":"optim.Adam",
@@ -39,7 +39,7 @@ wavegan_dict = {
     "epochs":75,
     "device":"cuda" if torch.cuda.is_available() else "cpu",
     "betas":(0.5,0.9),
-    "data_path":r"F:\DataSets\Audio\Drums",
+    "data_path":r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\MINST",
     "batch_size":64,
     "latent_space":100,
     "lr":1e-4,

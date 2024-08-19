@@ -2,6 +2,11 @@ from torch.utils.data import Dataset
 import os
 import torchaudio
 import librosa
+import matplotlib.pyplot as plt
+import numpy as np
+import librosa
+
+
 
 class WaveDataset(Dataset):
     def __init__(self,
@@ -16,6 +21,8 @@ class WaveDataset(Dataset):
 
     def __len__(self):
         return len(self.all_data)
+
+
     
     def __getitem__(self, idx):
         data, fs = torchaudio.load(self.all_data[idx])

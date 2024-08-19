@@ -238,7 +238,7 @@ class GanBase(object):
         all_images = []
         for filename in sorted(os.listdir(os.path.join(self.save_path,self.name,"images"))):
             if filename.endswith(".png") or filename.endswith(".jpg") and filename != "Loss_Plot.png":
-                image_path = os.path.join(self.name, "images", filename)
+                image_path = os.path.join(r"C:\Users\analf\Desktop\Datasets_And_Results\Results\GANS",self.name, "images", filename)
                 image = Image.open(image_path)
                 fig, ax = plt.subplots()
                 ax.imshow(image)

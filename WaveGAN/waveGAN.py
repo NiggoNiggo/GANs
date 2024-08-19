@@ -4,6 +4,7 @@ import torch
 import torchvision.utils as vutils
 from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
+from Base_Models.audio_transformer import WaveNormalizer
 import os
 import numpy as np
 class WaveGAN(WGAN):
@@ -54,6 +55,7 @@ class WaveGAN(WGAN):
     def predict(self,epoch):
         noise = self.make_noise(1)
         fake = self.gen(noise).detach().cpu()
+        fake = WaveNormalizer().denormalize_waveform(fake)
         fig, ax = plt.subplots()
         output_path = os.path.join(self.save_path,self.name, "audio", f"{repr(self.gen)}_{self.name}_epoch_{epoch}.wav")
         plt.title(f" Epoch: {epoch}")

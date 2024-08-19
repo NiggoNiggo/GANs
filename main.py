@@ -256,16 +256,24 @@ if __name__ == "__main__":
                         dataloader=data_loader,
                         params=params,
                         device=params["device"],
-                        name="wavegan_drums",
+                        name="wavegan_mnist",
                         lam=params["lam"],
                         n_critic=params["n_crit"],
                         alpha=params["alpha"],
                         betas=params["betas"],
                         conditional=False,
                         num_classes=0)
+        # wavegan.make_gif("wave_gan_to_epoch_75.gif")
+        name_gen, name_disc = repr(gen), repr(disc)
+        wavegan.load_models(name_gen=gen,name_disc=disc)
+        # wavegan.make_gif("wavegan.gif")
         wavegan.make_entire_training()
 
+        
+        # soundcard downloaden und mal qualität von mic beurteilen
 
+
+# drum dataset aus samplelib zusammenstellen?
 
 #mal bisschen die parameter bei den funktionsaufrufen überprüfen, dass dort etwas eingespart wird und nicht jedes mal der aufruf befehl so langfe ist 
 # beispiel devices ist nämlich in params mit drin
