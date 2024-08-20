@@ -38,13 +38,13 @@ specgan_dict = {
     "sr":16000,
     "Dataset":"Dataset",
     "Dataset_conditional_params":{
-        "path":r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\MINST",
+        "path":r"F:\DataSets\Audio\Drums",
         "num_classes":10,
         "transform":"SpecGANTransformer",
         "conditional":"True"
     },
     "Dataset_params":{
-        "path":r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\MINST",
+        "path":r"F:\DataSets\Audio\Drums",
         "num_classes":0,
         "transform":"SpecGANTransformer",
         "conditional":"False"
@@ -54,7 +54,7 @@ specgan_dict = {
     "epochs":75,
     "device":"cuda" if torch.cuda.is_available() else "cpu",
     "betas":(0.5,0.9),
-    "data_path":r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\MINST",
+    "data_path":r"F:\DataSets\Audio\Drums",
     "batch_size":64,
     "latent_space":100,
     "lr":1e-4,
@@ -84,7 +84,7 @@ specgan_mapping = {
     "Discriminator": SpecDiscriminator,
     "AudioDataset": AudioDataset,
     "optim.Adam": optim.Adam,
-    "Dataset":MnistAudio,
+    "Dataset":AudioDataset,
     "SpecGANTransformer":SpecGANTransformer
 }
 

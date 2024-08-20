@@ -93,6 +93,6 @@ class WaveNormalizer:
 
 
     def __call__(self,x):
-        x = self.normalize_waveform(x)
+        # x = self.normalize_waveform(x)
         x = self.make_same_length(x)
         return x

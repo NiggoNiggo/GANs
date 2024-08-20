@@ -31,15 +31,15 @@ wavegan_dict = {
     "sr":16000,
     "Dataset":"WaveDataset",
     "Dataset_params":{
-        "path":r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\MINST",
+        "path":r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\RS6",
         "transform":"waveganTransformer"
     },
     "gen_optimizer":"optim.Adam",
     "disc_optimizer":"optim.Adam",
-    "epochs":75,
+    "epochs":1000,
     "device":"cuda" if torch.cuda.is_available() else "cpu",
     "betas":(0.5,0.9),
-    "data_path":r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\MINST",
+    "data_path":r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\RS6",
     "batch_size":64,
     "latent_space":100,
     "lr":1e-4,

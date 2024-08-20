@@ -1,5 +1,5 @@
 # from training import TrainingBase
-import os, sys, json, torch
+import os, sys, json, torch, argparse
 
 
 from WGAN_GP.wgan_pg import WGAN
@@ -173,7 +173,7 @@ if __name__ == "__main__":
                     dataloader=data_loader,
                     params=params,
                     device="cuda",
-                    name="specgan_drums",
+                    name="specgan_drums_II",
                     lam=params["lam"],
                     n_critic=params["n_crit"],
                     alpha=params["alpha"],
@@ -217,7 +217,7 @@ if __name__ == "__main__":
                                 dataloader=data_loader,
                                 params=params,
                                 device="cuda",
-                                name="mins_specgan_final",
+                                name="Rs6",
                                 lam=params["lam"],
                                 n_critic=params["n_crit"],
                                 alpha=params["alpha"],
@@ -256,7 +256,7 @@ if __name__ == "__main__":
                         dataloader=data_loader,
                         params=params,
                         device=params["device"],
-                        name="wavegan_mnist",
+                        name="wavegan_RS6",
                         lam=params["lam"],
                         n_critic=params["n_crit"],
                         alpha=params["alpha"],
@@ -269,6 +269,11 @@ if __name__ == "__main__":
         # wavegan.make_gif("wavegan.gif")
         wavegan.make_entire_training()
 
+
+
+        # får rs6 muss ich wohl doch nochmal bisschen mehr preprocessing machen und die yeit optimal nutyen aus dem datensatyt, dass nicht verschwendet wird 
+    # für rs6 conditional einbauen für beschleunigen und nicht bechleunigen
+    #und auf 4s erweitern 
         
         # soundcard downloaden und mal qualität von mic beurteilen
 
