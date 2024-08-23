@@ -256,7 +256,7 @@ if __name__ == "__main__":
                         dataloader=data_loader,
                         params=params,
                         device=params["device"],
-                        name="wavegan_RS6",
+                        name="wavegan_RS6_4s",
                         lam=params["lam"],
                         n_critic=params["n_crit"],
                         alpha=params["alpha"],
@@ -266,23 +266,19 @@ if __name__ == "__main__":
         # wavegan.make_gif("wave_gan_to_epoch_75.gif")
         name_gen, name_disc = repr(gen), repr(disc)
         wavegan.load_models(name_gen=gen,name_disc=disc)
-        # wavegan.make_gif("wavegan.gif")
+        # wavegan.make_gif("rs6.gif")
         wavegan.make_entire_training()
 
 
 
-        # får rs6 muss ich wohl doch nochmal bisschen mehr preprocessing machen und die yeit optimal nutyen aus dem datensatyt, dass nicht verschwendet wird 
+    # får rs6 muss ich wohl doch nochmal bisschen mehr preprocessing machen und die yeit optimal nutyen aus dem datensatyt, dass nicht verschwendet wird 
     # für rs6 conditional einbauen für beschleunigen und nicht bechleunigen
     #und auf 4s erweitern 
         
-        # soundcard downloaden und mal qualität von mic beurteilen
 
 
-# drum dataset aus samplelib zusammenstellen?
 
-#mal bisschen die parameter bei den funktionsaufrufen überprüfen, dass dort etwas eingespart wird und nicht jedes mal der aufruf befehl so langfe ist 
-# beispiel devices ist nämlich in params mit drin
-
+#argparser benutzen anstatt dict dann mit json datei arbeiten, wobei daas eigentlich far nicht so viel sinn mache
 
 #base klassen besser definiern um mehr code zu sparen 
 #insgesamt mal bisschen aufräumen

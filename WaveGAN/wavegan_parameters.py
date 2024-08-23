@@ -36,7 +36,7 @@ wavegan_dict = {
     },
     "gen_optimizer":"optim.Adam",
     "disc_optimizer":"optim.Adam",
-    "epochs":1000,
+    "epochs":20,
     "device":"cuda" if torch.cuda.is_available() else "cpu",
     "betas":(0.5,0.9),
     "data_path":r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\RS6",

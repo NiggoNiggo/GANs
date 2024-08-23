@@ -208,7 +208,9 @@ class GanBase(object):
     
     def plot_loss(self):
         fig, ax = plt.subplots(figsize=(10, 6))  
-
+        for keys, values in self.loss_values.items():
+            print(keys, type(values))
+        print()
         # Farben und Linienstile für bessere Unterscheidung
         colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
         linestyles = ['-', '--', '-.', ':']

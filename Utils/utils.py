@@ -62,4 +62,22 @@ def plot_wave_spectrum(path):
     plt.show()
 
 
-plot_wave_spectrum(r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\RS6")
+def make_audio_suitable(path):
+    #here the audio is splittet into 2 lists (beschleunigung and not)
+    all_files = []
+    for r,d,f in os.walk(path):
+        all_files.extend([os.path.join(r,file) for file in f])
+    beschleunigung = []
+
+    for file in all_files:
+        if file.lower().find("beschleunigung"):
+            beschleunigung.append(file)
+            all_files.remove(file)
+
+    
+    
+    
+
+
+if __name__ == "__main__":
+    plot_wave_spectrum(r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\RS6")

@@ -36,8 +36,6 @@ class DCGAN(GanBase):
             # save current batch idx as a class variable
             self.current_batch_idx = idx
             #train discriminator with real batch
-            # plt.imshow(np.transpose(data[0],(1,2,0)))
-            # plt.show()
             #access data from batch
             real = data.to(self.device)
             
