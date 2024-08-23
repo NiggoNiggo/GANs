@@ -1,18 +1,30 @@
 ## This file contains various implementations of GANs.
-As well there are various base classes implementet for training and validation the gans.
+As well there are various base classes implementet for training and validation the gans. This project is made in pytorch.
 
 ## Overview
 This Project contains some classic GAN structures and helper functions to train dem. With this project is it possible to train DCGAN, CGAN, SpecGAN, WaveGAN, WGAN GP and more is coming later. These GANS has successfully implementet and generated audio and images.
 
 ## Requirements
+see the requirements.txt file for further informations
 
 ## Installation
 
 ## Install Dependencies
 
 ## Structure of Files
+The folder Base_Models contains various helper function and base classes. Here you can find the dataloaders and the custom layers for building your own models. The dataloaders are sperated in audio or image data.
 
-## Descriptions of Files
+Every GAN is structuerd as follows. One Folder with GAN name in Big letters contains a Generator and Discriminator python file. Additionally ther is one train file called similar to the folder. This file is a subclass of *gan_base.py* that contains the training routine in genral and some prediction and validation methodes. The train_one_epoch() Methode is not implementet and should be implementet for every GAN specificlly. But in WGAN GP and DCGAN the training routines for Wasserstein GAN with gradient penalty and the normal GAN training routine are implementet. If you want to use them you can inheriate your new GAN from one of these classes. Mostly the GAN folde contain additionally files to implement a conditonal version of the given GAN. This is not done for every GAN so far.
+
+The Utils folder contains some helper functions that you need in order to get full success in training gans but are not relatet to the rest of this implementations.
+
+
+## Descriptions of GANs
+- DCGAN 
+- WGAN GP
+- CGAN
+- SpecGAN
+- WaveGAN
 
 
 # Usage
