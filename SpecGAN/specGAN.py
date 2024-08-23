@@ -1,7 +1,8 @@
-from Base_Models import gan_base
 from WGAN_GP.wgan_pg import WGAN
-from tqdm.auto import tqdm
+from SpecGAN.spec_discriminator import SpecDiscriminator
+from SpecGAN.spec_generator import SpecGenerator
 import torch
+from torch import optim
 import os
 import torchvision.utils as vutils
 import librosa
@@ -9,43 +10,52 @@ import numpy as np
 import matplotlib.pyplot as plt
 import soundfile as sf
 
+from Base_Models.audio_data_loader import AudioDataset
+from Utils.utils import init_weights
+from Utils.parameters import parse_specgan_arguments
 from Base_Models.audio_transformer import SpecGANTransformer
 
 class SpecGAN(WGAN):
     def __init__(self,
-                gen,
-                disc,
-                optim_gen,
-                optim_disc,
-                dataloader,
-                params:dict,
-                device:str,
-                name:str,
-                lam:int,
-                n_critic:int,
-                alpha:float,
-                betas:tuple,
-                conditional:bool=False,
-                num_classes:int=0):
-        super().__init__(gen=gen,
-                         disc=disc,
-                         optim_disc=optim_disc,
-                         optim_gen=optim_gen,
-                         dataloader=dataloader,
-                         params=params,
-                         device=device,
-                         name=name,
-                         lam=lam,n_critic=n_critic,
-                         alpha=alpha,betas=betas,
-                         conditional=conditional,
-                         num_classes=num_classes)
+                 device:str,
+                name:str):
+        super().__init__(device=device,
+                         name=name
+                         )
         #hier die condition mit einbringen
     
-    
+    def init_models(self):
+        self.params = parse_specgan_arguments()
+        self.gen = SpecGenerator(self.params.num_layers,
+                            self.params.c,
+                            self.params.d).to(self.device)
+        self.disc = SpecDiscriminator(self.params.num_layers,
+                                 self.params.c,
+                                 self.params.d).to(self.device)
+
+        #apply weights
+        self.gen.apply(init_weights)
+        self.disc.apply(init_weights)
+
+        
+        self.optim_gen= optim.Adam(self.gen.parameters(),
+                               lr=self.params.lr,
+                               betas=self.params.betas)
+        #init optimizers Discriminator
+        self.optim_disc = optim.Adam(self.disc.parameters(),
+                               lr=self.params.lr,
+                               betas=self.params.betas)
+        
+        dataset = AudioDataset(self.params.data_path)
+
+        self.dataloader = torch.utils.data.DataLoader(
+                                            dataset=dataset,
+                                            batch_size=self.params.batchsize,
+                                            shuffle=True) 
+
     def train_one_epoch(self):
         return super().train_one_epoch()
     
-    # # def _process_real_data(self, data: torch.tensor):
         
 
     def _train_discriminator(self, real, fake):
@@ -60,7 +70,7 @@ class SpecGAN(WGAN):
     def predict(self,epoch):
         #save path to the image folder
         image_path = os.path.join(self.save_path,self.name,"images")
-        noise = self.make_noise(self.params["batch_size"])
+        noise = self.make_noise(self.params.batchsize)
         with torch.no_grad():
             fake = self.gen(noise).detach().cpu()
             vutils.save_image(vutils.make_grid(fake, padding=2, normalize=True),os.path.join(image_path,f"Spectrogramm_epoch_{epoch}.png"),normalize=True)

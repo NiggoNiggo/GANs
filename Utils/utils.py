@@ -1,6 +1,5 @@
 import torch
 from torch import nn
-from torchsummary import summary
 import os
 import soundfile as sf
 import matplotlib.pyplot as plt
@@ -8,13 +7,6 @@ import librosa
 import random
 import numpy as np
 
-# def init_weights(m):
-#     classname = m.__class__.__name__
-#     if classname.find('Conv') != -1:
-#         nn.init.normal_(m.weight.data, 0.0, 0.02)
-#     elif classname.find('BatchNorm') != -1:
-#         nn.init.normal_(m.weight.data, 1.0, 0.02)
-#         nn.init.constant_(m.bias.data, 0)
 
 def init_weights(m):
     if isinstance(m, nn.ConvTranspose1d) or isinstance(m, nn.Conv2d):  # Prüfe auf Conv-Schichten
@@ -44,9 +36,6 @@ def show_audio_infos(path):
         Amount of files found: {len_files} \n\tSamplerates found: {set(all_fs)} \n\tMean Duration: {sum(all_length)/len(all_length)} \n\tAll length: {sum(all_length)}sekunden
         """)
 
-# show_audio_infos(r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\RS6")
-# show_audio_infos(r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\MINST")
-# show_audio_infos(r"F:\DataSets\Audio\Drums")
 
 def plot_wave_spectrum(path):
     file = random.choice(os.listdir(path))
@@ -74,7 +63,6 @@ def make_audio_suitable(path):
             beschleunigung.append(file)
             all_files.remove(file)
 
-    
     
     
 

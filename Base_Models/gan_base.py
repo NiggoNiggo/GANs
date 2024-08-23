@@ -12,7 +12,7 @@ from torchsummary import summary
 
 class GanBase(object):
     def __init__(self,
-                 params:dict,
+                 device:str,
                  name:str):
         """Base class for Gan training. train_one_epoch has to be implementet to adapt the 
         training to a various gan training
@@ -32,14 +32,14 @@ class GanBase(object):
         num_classes : int
             amount of classes if the GAN is conditional
         """
-        self.params = params
-        self.device = torch.device("cuda" if self.params.device == "cuda" else "cpu")
+        self.device = torch.device("cuda" if device == "cuda" else "cpu")
         self.name = name
         self.loss_values = {}#contains los values for variable nums of gens and disc
         self.save_path = r"C:\Users\analf\Desktop\Datasets_And_Results\Results\GANS"
+        self.init_models()
         self._create_directory()
         self.start_epoch = 0
-        self.init_models()
+        
     
     def init_models(self):
         """This methode has to be overwritten in order to initilize your gan models. Generator, Discriminator, loss Functions and optimzers.

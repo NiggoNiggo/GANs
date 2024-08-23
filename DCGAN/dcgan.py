@@ -3,6 +3,7 @@ from DCGAN.dcgan_generator import Generator
 from Base_Models.gan_base import GanBase
 from Base_Models.image_data_loader import CustomDataset
 from torch.utils.data import DataLoader
+from Utils.parameters import parse_normal_gans_arguments
 import torch
 import numpy as np
 from tqdm.auto import tqdm
@@ -14,16 +15,18 @@ from Utils.utils import init_weights
 
 class DCGAN(GanBase):
     def __init__(self,
-                params:dict,
+                 device:str,
                 name:str):
-        super().__init__(params=params,
+        super().__init__(device=device,
                          name=name)
         #init loss save dict
         self.init_models()
         self.loss_values["loss_d"] = []
         self.loss_values["loss_g"] = []
-    
+
+        
     def init_models(self):
+        self.params = parse_normal_gans_arguments()
         self.disc = Discriminator(num_layers=self.params.num_layers,
                                   in_channels=[3, 64, 128, 256, 512, 1024],
                                   out_channels=[64, 128, 256, 512, 1024, 1],

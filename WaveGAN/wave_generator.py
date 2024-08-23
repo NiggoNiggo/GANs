@@ -10,8 +10,8 @@ class WaveGenerator(nn.Module):
         self.num_layers = num_layers
         self.d = d
         self.c = c
-        in_channels = [32,16,8,4,2,1]
-        out_channels = [16,8,4,2,1,self.c]
+        in_channels = [16,8,4,2,1]
+        out_channels = [8,4,2,1,self.c]
         layers = [nn.Linear(100,256*self.d), 
                     nn.Unflatten(1, (16*self.d, 16)),
                     nn.ReLU(True)

@@ -1,47 +1,59 @@
 from WGAN_GP.wgan_pg import WGAN
 import soundfile as sf
 import torch 
+from torch import optim
 import torchvision.utils as vutils
 from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
 from Base_Models.audio_transformer import WaveNormalizer
+from Utils.parameters import parse_wavegan_arguments
+from WaveGAN.wavegan_dataset import WaveDataset
+
+from WaveGAN.wave_discriminator import WaveDiscriminator
+from WaveGAN.wave_generator import WaveGenerator
+from Utils.utils import init_weights
 import os
 import numpy as np
 class WaveGAN(WGAN):
     def __init__(self,
-                gen,
-                disc,
-                optim_gen,
-                optim_disc,
-                dataloader,
-                params:dict,
+                
                 device:str,
                 name:str,
-                lam:int,
-                n_critic:int,
-                alpha:float,
-                betas:tuple,
-                conditional:bool=False,
-                num_classes:int=0):
-        super().__init__(gen=gen,
-                         disc=disc,
-                         optim_disc=optim_disc,
-                         optim_gen=optim_gen,
-                         dataloader=dataloader,
-                         params=params,
+                ):
+        super().__init__(
                          device=device,
-                         name=name,
-                         lam=lam,n_critic=n_critic,
-                         alpha=alpha,betas=betas,
-                         conditional=conditional,
-                         num_classes=num_classes)
+                         name=name
+                        )
+    def init_models(self):
+        self.params = parse_wavegan_arguments()
+        
+        self.gen = WaveGenerator(self.params.num_layers,self.params.c,self.params.d).to(self.device)
+        self.disc = WaveDiscriminator(self.params.num_layers,self.params.c,self.params.d).to(self.device)
+
+        #apply weights
+        self.gen.apply(init_weights)
+        self.disc.apply(init_weights)
+
+        self.optim_gen = optim.Adam(params=self.gen.parameters(),
+                                            lr=self.params.lr,
+                                            betas=self.params.betas)
+        #init optimizers Discriminator
+        self.optim_disc = optim.Adam(params=self.disc.parameters(),
+                                            lr=self.params.lr,
+                                            betas=self.params.betas)
+    
+        dataset = WaveDataset(self.params.data_path,transform=WaveNormalizer())
+        self.dataloader = torch.utils.data.DataLoader(
+                                            dataset=dataset,
+                                            batch_size=self.params.batchsize,
+                                            shuffle=True)
         
             
     def train_one_epoch(self):
        return super().train_one_epoch()
     
     def _process_real_data(self, data: torch.tensor):
-        return data.unsqueeze(1).to(self.params["device"])
+        return data.unsqueeze(1).to(self.device)
 
     def _train_generator(self,batch_size):
         return super()._train_generator(batch_size)

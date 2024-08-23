@@ -23,7 +23,7 @@ class AudioDataset(Dataset):
             all_files = [os.path.join(r,file) for file in f if file.endswith(".wav")]
             self.all_files.extend(all_files)
         
-        self.transform = SpecGANTransformer(256,256,128,128,128)
+        self.transform = SpecGANTransformer(256,256,128,128,128,16000)
         
         
     def __len__(self):
@@ -48,7 +48,8 @@ class AudioDataset(Dataset):
             padding = (0, missing)  # (left_pad, right_pad)
             data = torch.nn.functional.pad(data, padding)
         
-        x = self.transform(data)
+        x = self.transform(data,fs)
+        print(x.shape)
         return x
 
     def plot_spectrogram(self, spectrogram):
