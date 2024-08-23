@@ -12,36 +12,15 @@ from torchsummary import summary
 
 class GanBase(object):
     def __init__(self,
-                 gen,
-                 disc,
-                 optim_gen,
-                 optim_disc,
-                 loss_fn,
-                 dataloader,
                  params:dict,
-                 device:str,
-                 name:str,
-                 conditional:bool=False,
-                 num_classes:int=0):
+                 name:str):
         """Base class for Gan training. train_one_epoch has to be implementet to adapt the 
         training to a various gan training
         This should be able to make training for DCGAN, WGAN and CycleGAN
 
         Parameters
         ----------
-        gen : Generator 
-            Generator for GAN
-        disc : Discriminator
-            Discriminator for GAN
-        optim_gen : Optimzer 
-            Optimizer for Generato
-        optim_disc : Optimzer 
-            Optimizer for Discriminator
-        loss_fn : Loss funktion
-            Loss function for GAN
-        dataloader : Data Loader
-            pytorch data loader that contains all data
-        params : dict
+        params : argparser object
             contains all parameters to train the gan
         device : str
             if 'cuda' use gpu if 'cpu' use cpu
@@ -53,21 +32,20 @@ class GanBase(object):
         num_classes : int
             amount of classes if the GAN is conditional
         """
-        self.gen = gen
-        self.disc = disc
-        self.optim_gen = optim_gen
-        self.optim_disc = optim_disc
-        self.loss_fn = loss_fn
-        self.data_loader = dataloader
         self.params = params
-        self.device = torch.device("cuda" if self.params["device"] == "cuda" else "cpu")
+        self.device = torch.device("cuda" if self.params.device == "cuda" else "cpu")
         self.name = name
         self.loss_values = {}#contains los values for variable nums of gens and disc
         self.save_path = r"C:\Users\analf\Desktop\Datasets_And_Results\Results\GANS"
         self._create_directory()
         self.start_epoch = 0
-        self.conditional = conditional
-        self.num_classes = num_classes
+        self.init_models()
+    
+    def init_models(self):
+        """This methode has to be overwritten in order to initilize your gan models. Generator, Discriminator, loss Functions and optimzers.
+        This function has to be done first and should be called in the very first begining
+        """
+        raise NotImplementedError
     
     def make_noise(self,batch_size:int)->torch.tensor:
         """makes a latent noise vector as input of the generator
@@ -85,11 +63,11 @@ class GanBase(object):
             latent space vector
         """
         # if data is image
-        if self.params["dtype"] == "image":
-            return torch.randn(batch_size,self.params["latent_space"],1,1,device=self.device)
+        if self.params.dtype == "image":
+            return torch.randn(batch_size,self.params.latent_space,1,1,device=self.device)
         # if data is audio 
-        elif self.params["dtype"] == "audio":
-            return torch.randn(batch_size,self.params["latent_space"],device=self.device)
+        elif self.params.dtype == "audio":
+            return torch.randn(batch_size,self.params.latent_space,device=self.device)
             
     
     def make_entire_training(self):
@@ -98,7 +76,7 @@ class GanBase(object):
         self.params["epochs]. As well some statistic functions are called and saved during the training
         """
         #range from epochs to make the training
-        epoch_range = range(self.start_epoch+1,self.params["epochs"]+self.start_epoch+1)
+        epoch_range = range(self.start_epoch+1,self.params.epochs+self.start_epoch+1)
         for epoch in epoch_range:
             self.epoch = epoch
             self.train_one_epoch()
@@ -141,7 +119,7 @@ class GanBase(object):
         #make dir for the given name
         os.makedirs(os.path.join(self.save_path,self.name),exist_ok=True)
         #list all needed folders
-        if self.params["dtype"] == "audio":
+        if self.params.dtype == "audio":
             dirs = ["models","images","audio"]
         else:
             dirs = ["models","images"]
@@ -190,7 +168,7 @@ class GanBase(object):
     def predict(self,epoch):
         #save path to the image folder
         image_path = os.path.join(self.save_path,self.name,"images")
-        noise = torch.randn(self.params["batch_size"],self.params["latent_space"],1,1,device=self.device)
+        noise = torch.randn(self.params.batchsize,self.params.latent_space,1,1,device=self.device)
         with torch.no_grad():
             fake = self.gen(noise).detach().cpu()
             vutils.save_image(vutils.make_grid(fake, padding=2, normalize=True),os.path.join(image_path,f"result_epoch_{epoch}.png"),normalize=True)
@@ -202,9 +180,9 @@ class GanBase(object):
         """
         for arg in kwargs:
             if arg == "disc":
-                print(summary(kwargs[arg],(3,self.params["img_size"],self.params["img_size"])))
+                print(summary(kwargs[arg],(3,self.params.img_size,self.params.img_size)))
             elif arg == "gen":
-                print(summary(kwargs[arg],(self.params["latent_space"],1,1)))
+                print(summary(kwargs[arg],(self.params.latent_space,1,1)))
     
     def plot_loss(self):
         fig, ax = plt.subplots(figsize=(10, 6))  

@@ -1,6 +1,12 @@
 import torch 
 from tqdm.auto import tqdm
 
+from torch import optim
+import torchvision.transforms as T
+from torch.utils.data import DataLoader
+
+from Base_Models.image_data_loader import CustomDataset
+from Utils.utils import init_weights
 from WGAN_GP.wgan_gp_critic import Critiker
 from DCGAN.dcgan_generator import Generator
 from Base_Models.gan_base import GanBase
@@ -8,31 +14,51 @@ from Base_Models.gan_base import GanBase
 
 class WGAN(GanBase):
     def __init__(self,
-                 gen,
-                 disc,
-                 optim_gen,
-                 optim_disc,
-                 dataloader,
                  params:dict,
-                 device:str,
                  name:str,
-                 lam:int=10,
-                 n_critic:int=5,
-                 alpha=0.0001,
-                 betas:tuple=(0,0.9),
-                 loss_fn=None,
-                 conditional=False,
-                 num_classes:int=0
                  ):
-        super().__init__(gen,disc,optim_gen,optim_disc,loss_fn,dataloader,params,device,name,conditional=conditional,num_classes=num_classes)
-        self.lam = lam
-        self.n_critic = n_critic
-        self.alpha = alpha
-        self.betas = betas
+        super().__init__(params,name)
         #init the loss values for discriminator
         self.loss_values["loss_d"] = []
         #init the loss values for Generator
         self.loss_values["loss_g"] = []
+
+    def init_models(self):
+        self.disc = Critiker(num_layers=self.params.num_layers,
+                                  in_channels=[3, 64, 128, 256, 512, 1024],
+                                  out_channels=[64, 128, 256, 512, 1024, 1],
+                                  kernel_sizes=[4, 4, 4, 4, 4, 4],
+                                  strides=[2, 2, 2, 2, 2, 1],
+                                  paddings=[1, 1, 1, 1, 1, 0]).to(self.device)
+
+        self.gen = Generator(num_layers=self.params.num_layers,
+                                  in_channels=[100, 1024, 512, 256, 128, 64],
+                                  out_channels=[1024, 512, 256, 128, 64, 3],
+                                  kernel_sizes=[4, 4, 4, 4, 4, 4],
+                                  strides=[1, 2, 2, 2, 2, 2],
+                                  paddings=[0, 1, 1, 1, 1, 1],
+                                  batchnorm=False).to(self.device)
+
+        self.disc.apply(init_weights)
+        self.gen.apply(init_weights)
+
+        self.optim_gen = optim.Adam(self.gen.parameters(),
+                                    lr=self.params.lr_wgan,
+                                    betas=(0,0.9))
+
+        self.optim_disc = optim.Adam(self.disc.parameters(),
+                                    lr=self.params.lr_wgan,
+                                    betas=(0,0.9))
+
+
+        transforms = T.Compose([T.ToTensor(),
+                                T.Resize(self.params.img_size),
+                                T.CenterCrop(self.params.img_size)])
+        
+        self.dataloader = DataLoader(CustomDataset(self.params.data_path,transforms),
+                                     batch_size=self.params.batchsize,
+                                     shuffle=True)
+
     
     def gradient_penalty(self,
                          real_sample:torch.tensor,
@@ -51,9 +77,9 @@ class WGAN(GanBase):
         gradient_penalty : float
             gradient penalty to add on the wasserstein distance 
         """
-        if self.params["dtype"] == "image":
+        if self.params.dtype == "image":
             alpha = torch.rand(real_sample.shape[0],1,1,1,device=self.device)
-        elif self.params["dtype"] == "audio":
+        elif self.params.dtype == "audio":
             alpha = torch.rand(real_sample.shape[0],1,1,device=self.device)
         #interpolates the images with th egiven formular of the paper
         interpolates = (alpha * real_sample ) + ((1 - alpha)*fake_sample).requires_grad_(True)
@@ -83,13 +109,13 @@ class WGAN(GanBase):
         These funcrion makes this basisclass adaptable to any GAN that is trained with WGAN
         """
         #printe output von data loader
-        for idx, data in tqdm(enumerate(self.data_loader)):
+        for idx, data in tqdm(enumerate(self.dataloader)):
             batch_size = data.size(0)
             #process the real data in a proper formation
             real = self._process_real_data(data)
             loss_d = 0
             #train crit til it is perfect trained
-            for num_critic in range(self.n_critic):
+            for num_critic in range(self.params.n_crit):
                 #make a noise to pass through the generator
                 noise = self.make_noise(batch_size)
                 #gen a fake image
@@ -97,7 +123,7 @@ class WGAN(GanBase):
                 #get the discriminator loss from the train discriminator methode
                 loss_d += self._train_discriminator(real, fake).item()
             #mean of the loss 
-            loss_d = loss_d/self.params["n_crit"]
+            loss_d = loss_d/self.params.n_crit
             #get the generator loss by the 
             fake_loss = self._train_generator(batch_size)
             #print some stats 
@@ -129,8 +155,8 @@ class WGAN(GanBase):
         """
         if isinstance(data, list):
             data, label = data[0], data[1]
-            return data.to(self.params["device"]), label.to(self.params["device"])
-        return data.to(self.params["device"])
+            return data.to(self.device), label.to(self.device)
+        return data.to(self.device)
     
     def _train_discriminator(self, real:torch.tensor, fake:torch.tensor)->float:
         """_train_discriminator train the discriminator in the wgan process pipeline
@@ -155,7 +181,7 @@ class WGAN(GanBase):
         #calculate the gradient penalty
         gp = self.gradient_penalty(real, fake)
         #calculate loss d
-        loss_d = -torch.mean(real_disc) + torch.mean(fake_disc) + self.lam * gp
+        loss_d = -torch.mean(real_disc) + torch.mean(fake_disc) + self.params.lam * gp
         #backpropagation
         loss_d.backward()
         #optimzer step

@@ -1,38 +1,69 @@
-# from dcgan_discriminator import Discriminator
-# from dcgan_generator import Generator
+from DCGAN.dcgan_discriminator import Discriminator
+from DCGAN.dcgan_generator import Generator
 from Base_Models.gan_base import GanBase
+from Base_Models.image_data_loader import CustomDataset
+from torch.utils.data import DataLoader
 import torch
 import numpy as np
 from tqdm.auto import tqdm
+from torch import optim, nn
+import torchvision.transforms as T
+
+from Utils.utils import init_weights
 
 
 class DCGAN(GanBase):
     def __init__(self,
-                gen,
-                disc,
-                optim_gen,
-                optim_disc,
-                loss_fn,
-                dataloader,
                 params:dict,
-                device:str,
                 name:str):
-        super().__init__(gen=gen,
-                         disc=disc,
-                         optim_disc=optim_disc,
-                         optim_gen=optim_gen,
-                         loss_fn=loss_fn,
-                         dataloader=dataloader,
-                         params=params,
-                         device=device,
+        super().__init__(params=params,
                          name=name)
         #init loss save dict
+        self.init_models()
         self.loss_values["loss_d"] = []
         self.loss_values["loss_g"] = []
+    
+    def init_models(self):
+        self.disc = Discriminator(num_layers=self.params.num_layers,
+                                  in_channels=[3, 64, 128, 256, 512, 1024],
+                                  out_channels=[64, 128, 256, 512, 1024, 1],
+                                  kernel_sizes=[4, 4, 4, 4, 4, 4],
+                                  strides=[2, 2, 2, 2, 2, 1],
+                                  paddings=[1, 1, 1, 1, 1, 0]).to(self.device)
+
+        self.gen = Generator(num_layers=self.params.num_layers,
+                                  in_channels=[100, 1024, 512, 256, 128, 64],
+                                  out_channels=[1024, 512, 256, 128, 64, 3],
+                                  kernel_sizes=[4, 4, 4, 4, 4, 4],
+                                  strides=[1, 2, 2, 2, 2, 2],
+                                  paddings=[0, 1, 1, 1, 1, 1],
+                                  batchnorm=False).to(self.device)
+
+        self.disc.apply(init_weights)
+        self.gen.apply(init_weights)
+
+        self.optim_gen = optim.Adam(self.gen.parameters(),
+                                    lr=self.params.lr_dcgan,
+                                    betas=(0.5,0.999))
+
+        self.optim_disc = optim.Adam(self.disc.parameters(),
+                                    lr=self.params.lr_dcgan,
+                                    betas=(0.5,0.999))
+
+        self.loss_fn = nn.BCELoss()
+
+        transforms = T.Compose([T.ToTensor(),
+                                T.Resize(self.params.img_size),
+                                T.CenterCrop(self.params.img_size)])
+        
+        self.dataloader = DataLoader(CustomDataset(self.params.data_path,transforms),
+                                     batch_size=self.params.batchsize,
+                                     shuffle=True)
+
         
     def train_one_epoch(self):
         #printe output von data loader
-        for idx, data in tqdm(enumerate(self.data_loader)):
+        for idx, data in tqdm(enumerate(self.dataloader)):
             # save current batch idx as a class variable
             self.current_batch_idx = idx
             #train discriminator with real batch
@@ -54,7 +85,7 @@ class DCGAN(GanBase):
             # loss_real_disc = pred_real.mean().item()
             
             #train Discriminator with fake batch
-            noise = torch.randn(real.size(0),self.params["latent_space"],1,1,device=self.device)
+            noise = torch.randn(real.size(0),self.params.latent_space,1,1,device=self.device)
             fake = self.gen(noise)
             #predict the fake labels
             pred_fake = self.disc(fake.detach())

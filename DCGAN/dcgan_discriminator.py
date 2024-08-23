@@ -14,7 +14,6 @@ class Discriminator(nn.Module):
         self.layers = []
         for num in range(num_layers):
             last_layer = (num == num_layers - 1)
-            print(last_layer,num)
             #get the correct argument for last layer
             layer = DownscaleLayer(in_channels=in_channels[num],
                                  out_channels=out_channels[num],
