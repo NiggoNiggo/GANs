@@ -65,10 +65,7 @@ class WaveGAN(WGAN):
                          name=name,
                          params=params
                         )
-        if isinstance(params,argparse):
-            self.params = params 
-        else:
-            self.params = args
+        self.params = params
     def init_models(self):
         # self.params = parse_wavegan_arguments()
         
