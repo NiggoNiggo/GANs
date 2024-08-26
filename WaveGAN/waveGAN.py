@@ -14,6 +14,7 @@ from WaveGAN.wave_generator import WaveGenerator
 from Utils.utils import init_weights
 import os
 import numpy as np
+import argparse
 
 
 from WaveGAN import args
@@ -64,7 +65,10 @@ class WaveGAN(WGAN):
                          name=name,
                          params=params
                         )
-        self.params = params 
+        if isinstance(params,argparse):
+            self.params = params 
+        else:
+            self.params = args
     def init_models(self):
         # self.params = parse_wavegan_arguments()
         
