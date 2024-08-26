@@ -3,9 +3,7 @@ from DCGAN.dcgan_generator import Generator
 from Base_Models.gan_base import GanBase
 from Base_Models.image_data_loader import CustomDataset
 from torch.utils.data import DataLoader
-# from Utils.parameters import parse_normal_gans_arguments
 import torch
-import numpy as np
 from tqdm.auto import tqdm
 from torch import optim, nn
 import torchvision.transforms as T

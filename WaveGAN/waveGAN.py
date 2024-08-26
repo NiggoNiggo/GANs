@@ -14,10 +14,8 @@ from WaveGAN.wave_generator import WaveGenerator
 from Utils.utils import init_weights
 import os
 import numpy as np
-import argparse
 
 
-from WaveGAN import args
 
 class WaveGAN(WGAN):
     """

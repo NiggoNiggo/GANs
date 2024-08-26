@@ -12,8 +12,8 @@ import soundfile as sf
 
 from Base_Models.audio_data_loader import AudioDataset
 from Utils.utils import init_weights
-# from Utils.parameters import parse_specgan_arguments
-from Base_Models.audio_transformer import SpecGANTransformer
+from Utils.parameters import parse_gan_args
+
 
 class SpecGAN(WGAN):
     def __init__(self,
