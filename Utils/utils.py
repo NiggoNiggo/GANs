@@ -67,5 +67,3 @@ def make_audio_suitable(path):
     
 
 
-if __name__ == "__main__":
-    plot_wave_spectrum(r"C:\Users\analf\Desktop\Datasets_And_Results\Datasets\RS6")
