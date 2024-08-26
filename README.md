@@ -36,7 +36,8 @@ To change parameters you have to change the parameters in *Utils\parameters.py* 
 You can pip install this repository, but maybe you have to load pytorch and cuda in your needed version. Because a virtual environment can cause error and not find a suitable cuda version and you have to train the models on cpu~(very slow).
 
 
-
+## Notes
+It is not completely working unless you change your paths in some files. This is going to be my nect task to general it to use it with everyones system. Additoinally there are some new GANs coming soon to this project
 
 ## Citations
 

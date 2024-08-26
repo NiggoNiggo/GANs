@@ -32,14 +32,9 @@ class ConditionalSpecDiscriminator(nn.Module):
         
     def forward(self, labels,img):
         batch_size = img.size(0)
-        # print(img.shape,"image")
-        # Labels auf die Bildgröße bringen und mit dem Bild kombinieren
         c = self.embedding(labels).view(batch_size, self.num_labels,1,1)
-        # print(c.shape,"embedded")
         c = c.expand(batch_size, self.num_labels, 128, 128)
-        # print(c.shape,"expanded")
         x = torch.cat([img, c], dim=1)  # Verknüpft entlang der Channel-Dimension
-        # print(x.shape,"concat")
         return self.model(x)
 
     def __repr__(self):

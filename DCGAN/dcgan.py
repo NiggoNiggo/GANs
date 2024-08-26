@@ -27,7 +27,6 @@ class DCGAN(GanBase):
 
         
     def init_models(self):
-        # self.params = parse_normal_gans_arguments()
         self.disc = Discriminator(num_layers=self.params.num_layers,
                                   in_channels=[3, 64, 128, 256, 512, 1024],
                                   out_channels=[64, 128, 256, 512, 1024, 1],

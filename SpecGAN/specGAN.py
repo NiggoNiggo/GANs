@@ -77,17 +77,13 @@ class SpecGAN(WGAN):
         with torch.no_grad():
             fake = self.gen(noise).detach().cpu()
             vutils.save_image(vutils.make_grid(fake, padding=2, normalize=True),os.path.join(image_path,f"Spectrogramm_epoch_{epoch}.png"),normalize=True)
-    
-    def get_mean_nyquist(self):
-        pass
-    #soll letzten bin entferenen und am ende mitteln mit allen entfernen und wieder hinzufügen
+
  
             
     def make_audio(self, epoch):
         name_gen = repr(self.gen)
         self.load_models(name_gen=self.gen)
         
-        # Erzeuge Rauschvektoren für eine einzige Klasse (Batch-Größe von 1)
         
         
         with torch.no_grad():
@@ -98,12 +94,8 @@ class SpecGAN(WGAN):
 
                 gen_spec = 10**(gen_spec / 20)
 
-
-
-                # Rekonstruiere das Audiosignal
                 estimated_phase = librosa.griffinlim(S=np.vstack((gen_spec,np.zeros((1,128)))), n_iter=16, n_fft=256, hop_length=128)
                 
-                # Speichere das Audiosignal mit einem eindeutigen Namen
                 output_path = os.path.join(self.save_path,self.name, "audio", f"{name_gen}_{self.name}_epoch_{epoch}_class_{idx}.wav")
                 fig, ax = plt.subplots(1,2)
                 plt.title(f" Epoch: {epoch}")

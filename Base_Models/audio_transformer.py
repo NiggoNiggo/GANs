@@ -46,17 +46,7 @@ class SpecGANTransformer:
             # Pad the time steps
             padding = (0, self.target_length - spec.size(2))  # (left, right)
             spec = F.pad(spec, padding)
-        
-        # #normalize spektrum
-        # mean = torch.mean(spec, dim=-1,keepdim=True)
-        # std = torch.std(spec,dim=-1,keepdim=True)
-        
-        # spec = (spec-mean)/std
 
-        # spec = torch.clamp(spec,min=-3*std,max=3*std)
-
-        # # spec = spec/(3*std)
-    
         
         return spec
     
@@ -83,10 +73,8 @@ class WaveNormalizer:
     def make_same_length(self, x, length:int=16384):
         current_length = x.shape[-1]
         if current_length > length:
-            # Schneide das Signal ab, wenn es zu lang ist
             x = x[..., :length]
         elif current_length < length:
-            # Füge Zero-Padding hinzu, wenn es zu kurz ist
             padding = torch.zeros(x.shape[:-1] + (length - current_length,))
             x = torch.cat((x, padding), dim=-1)
         return x

@@ -29,18 +29,3 @@ class CustomDataset(Dataset):
         return img, label
     
 
-if __name__ == "__main__":
-    import torchvision.transforms as transforms
-    import numpy as np
-    import matplotlib.pyplot as plt
-    data = CustomDataset(r"C:\Users\analf\Desktop\Studium\Learn_NN\Datasets\Images\Yellyfish",transforms.Compose([transforms.Resize(64),
-                                     transforms.ToTensor(),
-                                     transforms.CenterCrop(64),
-                                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]))
-    
-    data, label = next(iter(data))
-    print(data.shape,label.shape)
-    
-    x = data[10]
-    plt.imshow(np.transpose(np.clip(x,0,1),(1,2,0)))
-    plt.show()

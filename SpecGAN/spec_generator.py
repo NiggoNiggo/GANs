@@ -33,8 +33,3 @@ class SpecGenerator(nn.Module):
     def __repr__(self):
         return "Generator_SpecGAN_"
     
-if __name__ == "__main__":
-    import torch 
-    spec = SpecGenerator(d=64,c=3)
-    latent = torch.rand(1,100)
-    print(spec(latent).shape)

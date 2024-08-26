@@ -49,7 +49,6 @@ class AudioDataset(Dataset):
             data = torch.nn.functional.pad(data, padding)
         
         x = self.transform(data,fs)
-        print(x.shape)
         return x
 
     def plot_spectrogram(self, spectrogram):

@@ -35,7 +35,6 @@ class UpscaleLayer(nn.Module):
         self.layers = nn.Sequential(*layers)
         
     def forward(self,x):
-        # print(x.shape,"upscale")
         return self.layers(x)
     
 
@@ -72,7 +71,6 @@ class DownscaleLayer(nn.Module):
             layers.append(nn.BatchNorm2d(num_features=self.out_channels))
         
         activation_funktion = self.get_activation_last_layer()
-        # print(activation_funktion)
         if activation_funktion:
             layers.append(activation_funktion)
         return nn.Sequential(*layers)
@@ -83,9 +81,7 @@ class DownscaleLayer(nn.Module):
         return activation_function
         
     def forward(self,x):
-        # print(x.shape, "vorher")
         x = self.layers(x)
-        # print(x.shape,"later")
         return x
     
 
@@ -148,7 +144,6 @@ class UpscaleConvTranspose1d(nn.Module):
         self.output_padding = output_padding
         self.last_layer = last_layer
         self.layer = self.build_layer()
-        # print(self.layer)
 
 
     def build_layer(self):
@@ -165,7 +160,6 @@ class UpscaleConvTranspose1d(nn.Module):
             layers.append(nn.BatchNorm1d(num_features=self.out_channels))
         
         activation_funktion = self.get_activation_last_layer()
-        # print(activation_funktion)
         if activation_funktion:
             layers.append(activation_funktion)
         return nn.Sequential(*layers)
@@ -213,7 +207,6 @@ class DownScaleConv1d(nn.Module):
             #bs, channels, length
         
         activation_funktion = self.get_activation_last_layer()
-        # print(activation_funktion)
         if activation_funktion:
             layers.append(activation_funktion)
         return nn.Sequential(*layers)
@@ -238,12 +231,7 @@ class PhaseShuffle(nn.Module):
         if shift == 0:
             return x
         
-        # Positive Verschiebung -> nach rechts verschieben
         elif shift > 0:
-            # Padding hinzufügen und das Signal nach rechts verschieben
             return nn.functional.pad(x, (shift, 0), mode='reflect')[:, :, :-shift]
-        
-        # Negative Verschiebung -> nach links verschieben
         else:
-            # Padding hinzufügen und das Signal nach links verschieben
             return nn.functional.pad(x, (0, -shift), mode='reflect')[:, :, -shift:]

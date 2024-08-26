@@ -1,7 +1,4 @@
 
-# from training import TrainingBase
-import argparse
-
 from WGAN_GP.wgan_pg import WGAN
 from DCGAN.dcgan import DCGAN
 
@@ -53,16 +50,13 @@ if __name__ == "__main__":
         
             wgan.make_entire_training()
     
-        #hier muss später dann noch für cgan das gemacht werden
     
     elif current_gan == "specgan":
         specgan = SpecGAN(device="cuda",
                         name="specgan_drums_II",
                         params=args)
-        # specgan.print_summary(gen=specgan.gen,disc=specgan.disc)
         name_gen, name_disc = repr(specgan.gen), repr(specgan.disc)
         specgan.load_models(name_gen=specgan.gen,name_disc=specgan.disc)
-        # specgan.print_summary(gen=gen,disc=disc)
         
         specgan.make_entire_training()
 

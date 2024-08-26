@@ -176,10 +176,6 @@ class GanBase(object):
             vutils.save_image(vutils.make_grid(fake, padding=2, normalize=True),os.path.join(image_path,f"result_epoch_{epoch}.png"),normalize=True)
     
     def print_summary(self,**kwargs):
-        """Muss umgebaut werden, sobald nmehr gens oder disc dazu kommen
-        print the summar of a  torch model 
-        kann über die repr() methode dann umgebaut werden
-        """
         for arg in kwargs:
             if arg == "disc":
                 print(summary(kwargs[arg],(3,self.params.img_size,self.params.img_size)))
@@ -191,7 +187,6 @@ class GanBase(object):
         for keys, values in self.loss_values.items():
             print(keys, type(values))
         print()
-        # Farben und Linienstile für bessere Unterscheidung
         colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
         linestyles = ['-', '--', '-.', ':']
         
@@ -200,16 +195,13 @@ class GanBase(object):
             linestyle = linestyles[i % len(linestyles)]
             ax.plot(range(len(values)), values, label=loss, color=color, linestyle=linestyle, linewidth=2)
 
-        # Titel und Achsenbeschriftungen
         ax.set_title(f"Loss Values for {self.name}", fontsize=16, fontweight='bold')
         ax.set_xlabel("Iterations", fontsize=14)
         ax.set_ylabel("Loss Value", fontsize=14)
         
-        # Legende und Grid hinzufügen
         ax.legend(loc='best', fontsize=12)
         ax.grid(True, linestyle='--', alpha=0.7)
 
-        # Formatierungen für die Achsen
         ax.tick_params(axis='both', which='major', labelsize=12)
         
         plt.tight_layout()  # Verbessert die Layout-Automatisierung
@@ -227,7 +219,6 @@ class GanBase(object):
                 ax.axis('off')  # Hide axes
                 fig.canvas.draw()
 
-                # Convert canvas to image and append
                 img = Image.frombytes('RGB', fig.canvas.get_width_height(), fig.canvas.tostring_rgb())
                 all_images.append(img)
                 plt.close(fig)
@@ -272,8 +263,6 @@ class GanBase(object):
         
 
         
-        # halfname == groups[type] == Type of the model (Critiker, Generator, Discriminator)
-        # filename == the name of the model to load
         for half_name, filename in groups.items():
             #arg name listed to give the model (gen or disc etc.) to this function
             for arg, model in kwargs.items():

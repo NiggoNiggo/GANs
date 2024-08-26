@@ -59,7 +59,6 @@ class MnistAudio(Dataset):
         if self.conditional == True:
             current_label = int(current_file.split("\\")[-1][0])
             label = torch.tensor(current_label)
-# mache mir hier einen plot des spektrogramms mit 1x128x128
             return data, label
         else:
             return data
@@ -78,8 +77,3 @@ class MnistAudio(Dataset):
     def get_num_classes(self):
         return self.num_classes
 
-if __name__ == "__main__":
-    dset = dataset = MnistAudio(path=r"F:\DataSets\Audio\MINST",
-                                num_classes=10,)
-    loader = DataLoader(dataset,1,shuffle=True)
-    x,y = next(iter(loader))

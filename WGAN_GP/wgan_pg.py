@@ -20,9 +20,7 @@ class WGAN(GanBase):
                 name:str):
         super().__init__(device=device,name=name,params=params)
         self.params = params 
-        #init the loss values for discriminator
         self.loss_values["loss_d"] = []
-        #init the loss values for Generator
         self.loss_values["loss_g"] = []
 
     def init_models(self):

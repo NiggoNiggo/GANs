@@ -18,8 +18,6 @@ class Critiker(nn.Module):
         self.layers = []
         for num in range(num_layers):
             last_layer = (num == num_layers - 1)
-            # print("last layer:",last_layer)
-            #get the correct argument for last layer
             layer = CriticLayer(in_channels=in_channels[num],
                                  out_channels=out_channels[num],
                                  kernel_size=kernel_sizes[num],
@@ -36,8 +34,6 @@ class Critiker(nn.Module):
     
     def forward(self, x):
         x = self.model(x)
-        # print(x.shape)
         return x.view(-1, 1).squeeze(1)  # Flatten output
-        # return x
     
         

@@ -39,9 +39,7 @@ class ConditionalSpecGenerator(nn.Module):
         
     def forward(self,labels,noise):
         c = self.embedding(labels)
-        # print(c.shape,"embedded gen")
         x = torch.cat([noise, c], dim=1)
-        # print(x.shape,"concat gen")
         return self.model(x)
     
     def __repr__(self):

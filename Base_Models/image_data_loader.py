@@ -27,15 +27,3 @@ class CustomDataset(Dataset):
         return img
     
 
-if __name__ == "__main__":
-    import torchvision.transforms as transforms
-    import numpy as np
-    import matplotlib.pyplot as plt
-    data = CustomDataset(r"C:\Users\analf\Desktop\Studium\Learn_NN\Datasets\Images\images_64x64\cats",transforms.Compose([transforms.Resize(64),
-                                     transforms.ToTensor(),
-                                     transforms.CenterCrop(64),
-                                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]))
-    
-    x = data[444]
-    plt.imshow(np.transpose(np.clip(x,0,1),(1,2,0)))
-    plt.show()

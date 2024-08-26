@@ -65,7 +65,8 @@ class WaveGAN(WGAN):
                         )
         self.params = params
     def init_models(self):
-        # self.params = parse_wavegan_arguments()
+        """initalize the models and optimzer and the loss function. Additionally the dataset and dataloader are initalized
+        the dataset is a custom datasez and can be changes or sdopted to your specific application (The dataset class is in the base models Folder)"""
         
         self.gen = WaveGenerator(self.params.num_layers,self.params.c,self.params.d).to(self.device)
         self.disc = WaveDiscriminator(self.params.num_layers,self.params.c,self.params.d).to(self.device)

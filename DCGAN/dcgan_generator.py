@@ -33,18 +33,3 @@ class Generator(nn.Module):
         return self.model(x)
     
 
-if __name__ == "__main__":
-    import torch
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    gen = Generator(num_layers=5,
-                    in_channels=[100,512,256,128,64],
-                    out_channels=[512,256,128,64,3],
-                    kernel_sizes=[4,4,4,4,4],
-                    strides=[1,2,2,2,2],
-                    paddings=[0,1,1,1,1]).to(device)
-    
-    latent_space = torch.rand((1,100,1,1)).to(device)
-    print(latent_space.shape)
-    output = gen(latent_space)
-    print(output)
-    print(output.shape)
