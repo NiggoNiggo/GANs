@@ -4,7 +4,7 @@ from tqdm.auto import tqdm
 from torch import optim
 import torchvision.transforms as T
 from torch.utils.data import DataLoader
-from Utils.parameters import parse_normal_gans_arguments
+# from Utils.parameters import parse_normal_gans_arguments
 
 from Base_Models.image_data_loader import CustomDataset
 from Utils.utils import init_weights
@@ -15,16 +15,18 @@ from Base_Models.gan_base import GanBase
 
 class WGAN(GanBase):
     def __init__(self,
+                 params,
                 device:str,
                 name:str):
-        super().__init__(device=device,name=name)
+        super().__init__(device=device,name=name,params=params)
+        self.params = params 
         #init the loss values for discriminator
         self.loss_values["loss_d"] = []
         #init the loss values for Generator
         self.loss_values["loss_g"] = []
 
     def init_models(self):
-        self.params = parse_normal_gans_arguments()
+        # self.params = parse_normal_gans_arguments()
         self.disc = Critiker(num_layers=self.params.num_layers,
                                   in_channels=[3, 64, 128, 256, 512, 1024],
                                   out_channels=[64, 128, 256, 512, 1024, 1],

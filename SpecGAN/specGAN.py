@@ -12,20 +12,23 @@ import soundfile as sf
 
 from Base_Models.audio_data_loader import AudioDataset
 from Utils.utils import init_weights
-from Utils.parameters import parse_specgan_arguments
+# from Utils.parameters import parse_specgan_arguments
 from Base_Models.audio_transformer import SpecGANTransformer
 
 class SpecGAN(WGAN):
     def __init__(self,
                  device:str,
+                 params,
                 name:str):
         super().__init__(device=device,
-                         name=name
+                         name=name,
+                         params=params
                          )
+        self.params = params 
         #hier die condition mit einbringen
     
     def init_models(self):
-        self.params = parse_specgan_arguments()
+        # self.params = parse_specgan_arguments()
         self.gen = SpecGenerator(self.params.num_layers,
                             self.params.c,
                             self.params.d).to(self.device)

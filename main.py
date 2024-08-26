@@ -1,15 +1,4 @@
 
-def parse_main_arguments():
-    parser = argparse.ArgumentParser(description="Select GAN type and handle training arguments.")
-    parser.add_argument('--gan_type', type=str, choices=["cgan", "wgan", "dcgan", "specgan", "wavegan"], required=True, help="Specify the GAN type to use.")
-    return parser.parse_args()
-try:
-    parser = parse_main_arguments()
-    current_gan = parser.gan_type
-    print(f"Run {current_gan}")
-except:
-    print("Wavegan is standard modell so now run WaveGAN")
-    current_gan = "wavegan"
 # from training import TrainingBase
 import argparse
 
@@ -22,13 +11,18 @@ from SpecGAN.specGAN import SpecGAN
 
 from WaveGAN.waveGAN import WaveGAN
 
+from Utils.parameters import parse_gan_type,parse_gan_args
 
 
-
-
-
-
-
+try:
+    parser = parse_gan_type()
+    current_gan, remaining_args = parse_gan_type()
+    print(f"Run {current_gan}")
+    args = parse_gan_args(current_gan,remaining_args)
+    print(f"The following Arguments are loaded for the GAN:{args}")
+except:
+    current_gan = "wavegan"
+    print(f"No Gan type selected. Start Training {current_gan}")
 
     
 # current_gan = "wavegan"
@@ -40,6 +34,7 @@ if __name__ == "__main__":
             #init optimizers Discriminator
             dcgan = DCGAN(
                         device="cuda",
+                        params=args,
                         name="test_dcgan")
             dcgan.make_entire_training()
 
@@ -47,6 +42,7 @@ if __name__ == "__main__":
 
             wgan = WGAN(
                         device="cuda",
+                        params=args,
                         name="wgan_128_jellyfish")
             
             wgan.print_summary(gen=wgan.gen,disc=wgan.disc)
@@ -59,7 +55,8 @@ if __name__ == "__main__":
     
     elif current_gan == "specgan":
         specgan = SpecGAN(device="cuda",
-                        name="specgan_drums_II")
+                        name="specgan_drums_II",
+                        params=args)
         # specgan.print_summary(gen=specgan.gen,disc=specgan.disc)
         name_gen, name_disc = repr(specgan.gen), repr(specgan.disc)
         specgan.load_models(name_gen=specgan.gen,name_disc=specgan.disc)
@@ -78,6 +75,7 @@ if __name__ == "__main__":
         wavegan = WaveGAN(
                         device="cuda",
                         name="wavegan_RS6_4s",
+                        params=args
                         )
         # wavegan.make_gif("wave_gan_to_epoch_75.gif")
         name_gen, name_disc = repr(wavegan.gen), repr(wavegan.disc)

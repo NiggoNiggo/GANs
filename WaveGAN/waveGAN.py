@@ -6,7 +6,7 @@ import torchvision.utils as vutils
 from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
 from Base_Models.audio_transformer import WaveNormalizer
-from Utils.parameters import parse_wavegan_arguments
+# from Utils.parameters import parse_wavegan_arguments
 from WaveGAN.wavegan_dataset import WaveDataset
 
 from WaveGAN.wave_discriminator import WaveDiscriminator
@@ -16,16 +16,18 @@ import os
 import numpy as np
 class WaveGAN(WGAN):
     def __init__(self,
-                
+                params,
                 device:str,
                 name:str,
                 ):
         super().__init__(
                          device=device,
-                         name=name
+                         name=name,
+                         params=params
                         )
+        self.params = params 
     def init_models(self):
-        self.params = parse_wavegan_arguments()
+        # self.params = parse_wavegan_arguments()
         
         self.gen = WaveGenerator(self.params.num_layers,self.params.c,self.params.d).to(self.device)
         self.disc = WaveDiscriminator(self.params.num_layers,self.params.c,self.params.d).to(self.device)

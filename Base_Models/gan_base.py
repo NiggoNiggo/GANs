@@ -13,6 +13,7 @@ from torchsummary import summary
 class GanBase(object):
     def __init__(self,
                  device:str,
+                 params,
                  name:str):
         """Base class for Gan training. train_one_epoch has to be implementet to adapt the 
         training to a various gan training
@@ -34,6 +35,7 @@ class GanBase(object):
         """
         self.device = torch.device("cuda" if device == "cuda" else "cpu")
         self.name = name
+        self.params = params 
         self.loss_values = {}#contains los values for variable nums of gens and disc
         self.save_path = r"C:\Users\analf\Desktop\Datasets_And_Results\Results\GANS"
         self.init_models()
