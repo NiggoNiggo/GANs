@@ -14,7 +14,46 @@ from WaveGAN.wave_generator import WaveGenerator
 from Utils.utils import init_weights
 import os
 import numpy as np
+
+
+from WaveGAN import args
+
 class WaveGAN(WGAN):
+    """
+    A WaveGAN model that inherits from the WGAN class and is used for generating and processing audio signals.
+
+    This class implements a WaveGAN for generating audio content. It includes the initialization of models and optimizers,
+    the execution of training epochs, and saving generated audio outputs and their visualizations.
+
+    :param params: An argparse.Namespace object that must contain the following arguments:
+        - `num_layers` (int): The number of layers in the generator and discriminator (default: 5).
+        - `d` (int): Model complexity (default: 64).
+        - `c` (int): Number of channels (default: 1).
+        - `epochs` (int): Number of epochs for training (default: 10).
+        - `data_path` (str): Path to the training data (default: "C:\\Users\\analf\\Desktop\\Datasets_And_Results\\Datasets\\RS6").
+        - `batchsize` (int): Batch size for training (default: 128).
+        - `latent_space` (int): Dimension of the latent space (default: 100).
+        - `lr` (float): Learning rate for the Adam optimizer (default: 2e-5).
+        - `audio_size` (int): Length of the audio signal (default: 16384).
+        - `lam` (float): Lambda for WGAN (default: 10).
+        - `n_crit` (int): Number of critics in WGAN (default: 5).
+        - `alpha` (float): Alpha for WGAN (default: 0.0001).
+        - `betas` (float, nargs=2): Betas for the Adam optimizer (default: (0, 0.9)).
+        - `dtype` (str): Data type (image or audio) (default: "audio").
+
+    :param device: The device string (e.g., "cpu" or "cuda") on which the model should be trained.
+    :param name: The name of the model or experiment, used for saving results.
+
+    Methods:
+    - `init_models()`: Initializes the generator and discriminator models, their optimizers, and the DataLoader.
+    - `train_one_epoch()`: Executes a training epoch, utilizing the implementation from the base class.
+    - `_process_real_data(data)`: Processes real data for training.
+    - `_train_generator(batch_size)`: Trains the generator.
+    - `_train_discriminator(real, fake)`: Trains the discriminator.
+    - `predict(epoch)`: Generates and saves audio files and visualizations for the specified epoch.
+
+    Note: To use this class, ensure that `params` is an `argparse.Namespace` object containing the arguments listed above. An example of creating such an object can be found in the `parse_gan_args` function.
+    """
     def __init__(self,
                 params,
                 device:str,
