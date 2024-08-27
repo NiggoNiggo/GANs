@@ -79,4 +79,5 @@ if __name__ == "__main__":
         # wavegan.make_gif("rs6.gif")
         wavegan.make_entire_training()
 
- 
+ #dataset variable machen, dass man einen eigenen einladen kann und
+ #pfade verallgemeinern

@@ -280,6 +280,9 @@ class GanBase(object):
         except UnboundLocalError:
             pass            
         
+    def fid_validation(self,fake_images,real_images):
+        pass
+        
 
             
             

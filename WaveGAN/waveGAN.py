@@ -29,7 +29,7 @@ class WaveGAN(WGAN):
         - `d` (int): Model complexity (default: 64).
         - `c` (int): Number of channels (default: 1).
         - `epochs` (int): Number of epochs for training (default: 10).
-        - `data_path` (str): Path to the training data (default: "C:\\Users\\analf\\Desktop\\Datasets_And_Results\\Datasets\\RS6").
+        - `data_path` (str): Path to the training data (default: "C:\\Users\\analf\\Desktop\\Datasets_And_Results\\Datasets\").
         - `batchsize` (int): Batch size for training (default: 128).
         - `latent_space` (int): Dimension of the latent space (default: 100).
         - `lr` (float): Learning rate for the Adam optimizer (default: 2e-5).
