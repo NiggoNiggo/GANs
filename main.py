@@ -1,20 +1,12 @@
-import os
-
-
 from WGAN_GP.wgan_pg import WGAN
 from DCGAN.dcgan import DCGAN
-
-
 from SpecGAN.specGAN import SpecGAN
-
-
 from WaveGAN.waveGAN import WaveGAN
 
 from Utils.parameters import parse_gan_type,parse_gan_args
 
 from torchsummary import summary
 
-import time
 
 try:
     parser = parse_gan_type()
@@ -29,7 +21,6 @@ except:
     print(f"No Gan type selected. Start Training {current_gan}")
 
     
-# current_gan = "wavegan"
 if __name__ == "__main__":
     
     if current_gan in ["cgan","wgan","dcgan"]:
@@ -75,21 +66,11 @@ if __name__ == "__main__":
         
         wavegan = WaveGAN(
                         device="cuda",
-                        name="wavegan",
+                        name="wavegan_chords",
                         params=args
                         )
         name_gen, name_disc = repr(wavegan.gen), repr(wavegan.disc)
         wavegan.load_models(name_gen=wavegan.gen,name_disc=wavegan.disc)
-        # wavegan.make_entire_training()
-        for epoch in range(734,735):
-            print(epoch)
-            start = time.time()
-            wavegan.make_audio(epoch=epoch,num_audios=100)
-            end = time.time() - start
-            print(f"Generating 100 Samples with 1s and loading the model took {end} s")
-            real_path = wavegan.dataset.path
-            
-            fake_path = os.path.join(wavegan.params.save_path,wavegan.name,"fake")
-            print(real_path,fake_path)
-            wavegan.fid_validation(real_path,fake_path,epoch)
+        wavegan.make_entire_training()
+        
 
