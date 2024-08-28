@@ -4,11 +4,18 @@
 import os
 import re
 from PIL import Image
+import random
+
+import librosa
+
+from Base_Models.audio_transformer import WaveNormalizer
 
 import matplotlib.pyplot as plt
 import torch 
 import torchvision.utils as vutils
 from torchsummary import summary
+import torchaudio
+from torchmetrics.image.fid import FrechetInceptionDistance
 
 class GanBase(object):
     def __init__(self,
@@ -37,7 +44,7 @@ class GanBase(object):
         self.name = name
         self.params = params 
         self.loss_values = {}#contains los values for variable nums of gens and disc
-        self.save_path = r"C:\Users\analf\Desktop\Datasets_And_Results\Results\GANS"
+        # self.params.save_path = r"C:\Users\analf\Desktop\Datasets_And_Results\Results\GANS"
         self.init_models()
         self._create_directory()
         self.start_epoch = 0
@@ -103,31 +110,20 @@ class GanBase(object):
         raise NotImplementedError
 
 
-
-    def validate_model(self):
-        """Method has to be overwritten for every single Gan implementation
-        This Methode Validate the GAN but is individual for every GAN.
-
-        Raises
-        ------
-        NotImplementedError
-            Has to be overwritten in order to validate a GAN
-        """
-        raise NotImplementedError
     
     def _create_directory(self):
         """Create a folder system to organize all saved models and images ind different folders
         This Method runs automaticly in the init function"""
         #make dir for the given name
-        os.makedirs(os.path.join(self.save_path,self.name),exist_ok=True)
+        os.makedirs(os.path.join(self.params.save_path,self.name),exist_ok=True)
         #list all needed folders
         if self.params.dtype == "audio":
-            dirs = ["models","images","audio"]
+            dirs = ["models","images","audio","fakes"]
         else:
-            dirs = ["models","images"]
+            dirs = ["models","images","fakes"]
         #create folder for every listet folder
         for folder in dirs:
-            os.makedirs(os.path.join(self.save_path,self.name,folder),exist_ok=True)
+            os.makedirs(os.path.join(self.params.save_path,self.name,folder),exist_ok=True)
     
     def print_stats(self, **kwargs):
         """Method to print a informational String, after every Epoch. This function take just 
@@ -161,7 +157,7 @@ class GanBase(object):
         
         """
         #save the path to the models
-        model_path = os.path.join(self.save_path,self.name,"models")
+        model_path = os.path.join(self.params.save_path,self.name,"models")
         for model in args:
             #hier noch ne Abfrage ob der Type richtig ist
             filename = f"{model.__repr__()}epoch_{self.epoch}.pth"
@@ -169,7 +165,7 @@ class GanBase(object):
     
     def predict(self,epoch):
         #save path to the image folder
-        image_path = os.path.join(self.save_path,self.name,"images")
+        image_path = os.path.join(self.params.save_path,self.name,"images")
         noise = torch.randn(self.params.batchsize,self.params.latent_space,1,1,device=self.device)
         with torch.no_grad():
             fake = self.gen(noise).detach().cpu()
@@ -210,7 +206,7 @@ class GanBase(object):
         
     def make_gif(self,output_path:str,duration=500):
         all_images = []
-        for filename in sorted(os.listdir(os.path.join(self.save_path,self.name,"images"))):
+        for filename in sorted(os.listdir(os.path.join(self.params.save_path,self.name,"images"))):
             if filename.endswith(".png") or filename.endswith(".jpg") and filename != "Loss_Plot.png":
                 image_path = os.path.join(r"C:\Users\analf\Desktop\Datasets_And_Results\Results\GANS",self.name, "images", filename)
                 image = Image.open(image_path)
@@ -222,7 +218,7 @@ class GanBase(object):
                 img = Image.frombytes('RGB', fig.canvas.get_width_height(), fig.canvas.tostring_rgb())
                 all_images.append(img)
                 plt.close(fig)
-        output_path = os.path.join(self.save_path,output_path)
+        output_path = os.path.join(self.params.save_path,output_path)
         all_images[0].save(output_path, save_all=True, append_images=all_images[1:], duration=duration, loop=0)
         print(f"GIF saved as {output_path}")
         
@@ -244,7 +240,7 @@ class GanBase(object):
         
         """
         #get correct path
-        path = os.path.join(self.save_path,self.name,"models")
+        path = os.path.join(self.params.save_path,self.name,"models")
         #list all models
         all_models = os.listdir(path)
         
@@ -270,7 +266,7 @@ class GanBase(object):
                 # model == Model Class like Discriminator Generator or something similar
                 if half_name in repr(model) and half_name in filename:
                     #load the model
-                    model.load_state_dict(torch.load(os.path.join(self.save_path,self.name,"models",filename), weights_only=True))
+                    model.load_state_dict(torch.load(os.path.join(self.params.save_path,self.name,"models",filename), weights_only=True))
         #return epoch from filename
         try:
             match = re.search(r"\d+", filename)
@@ -280,9 +276,54 @@ class GanBase(object):
         except UnboundLocalError:
             pass            
         
-    def fid_validation(self,fake_images,real_images):
-        pass
+    def fid_validation(self, real_path, fake_path,epoch:int,num_files:int=100):
+        fake_files = []
+        for r,d,f in os.walk(fake_path):
+            fake_files.extend([os.path.join(r,file) for file in f if file.find(f"epoch_{epoch}")])
+        real_files = librosa.util.find_files(real_path)
+        random.shuffle(real_files)
+        real_file = real_files[:num_files]
+
+        real_specs = []
+        fake_specs = []
         
+        apply_spec = torchaudio.transforms.Spectrogram(n_fft=256, hop_length=128)
+        apply_db = torchaudio.transforms.AmplitudeToDB()
+        norm = WaveNormalizer()
+        for real_file, fake_file in zip(real_files, fake_files):
+            real_audio, fs_real = torchaudio.load(real_file)
+            fake_audio, fs_fake = torchaudio.load(fake_file)
+
+            real_audio = norm(real_audio)
+
+            # Compute spectrogram
+            S_real = apply_spec(real_audio)
+            S_fake = apply_spec(fake_audio)
+            
+            db_real = apply_db(S_real)
+            db_fake = apply_db(S_fake)
+
+            # Repeat channels to match 3-channel input
+            db_real = db_real.repeat(3, 1, 1)
+            db_fake = db_fake.repeat(3, 1, 1)
+            real_specs.append(db_real)
+            fake_specs.append(db_fake)
+
+        
+        # Concatenate all spectrograms along the batch dimension
+        real_specs = torch.stack(real_specs, dim=0).to(torch.uint8)
+        fake_specs = torch.stack(fake_specs,dim=0).to(torch.uint8)
+
+        
+        # Compute FID
+        fid = FrechetInceptionDistance()
+        fid.update(real_specs, real=True)
+        fid.update(fake_specs, real=False)
+        fid_score = fid.compute()
+        
+        print(f"The FID Score is {fid_score}")
+            
+
 
             
             

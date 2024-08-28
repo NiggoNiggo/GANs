@@ -26,6 +26,7 @@ def parse_gan_args(selcted_gan, remaining_args):
         parser.add_argument('--n_crit', type=int, default=5, help='Anzahl der Kritiker bei WGAN')
         parser.add_argument('--alpha', type=float, default=0.0001, help='Alpha für WGAN')
         parser.add_argument('--dtype', type=str, default='image', help='Datentyp (Bild oder Audio)')
+        
     elif selcted_gan == "wavegan":
         parser.add_argument('--num_layers', type=int, default=5, help='Num layers')
         parser.add_argument('--d', type=int, default=64, help='Model complexity')
@@ -56,7 +57,7 @@ def parse_gan_args(selcted_gan, remaining_args):
         parser.add_argument('--alpha', type=float, default=0.0001, help='Alpha für WGAN')
         parser.add_argument('--betas', type=float, nargs=2, default=(0, 0.9), help='Betas für den Adam-Optimizer bei WGAN')
         parser.add_argument('--dtype', type=str, default='audio', help='Datentyp (Bild oder Audio)')
-    
+    parser.add_argument('--save_path', type=str, default=r'C:\Users\analf\Desktop\Datasets_And_Results\Results\GANS', help='path where to save the results')
     args = parser.parse_args(remaining_args)
     return args
 

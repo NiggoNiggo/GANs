@@ -70,6 +70,11 @@ class WaveGAN(WGAN):
         
         self.gen = WaveGenerator(self.params.num_layers,self.params.c,self.params.d).to(self.device)
         self.disc = WaveDiscriminator(self.params.num_layers,self.params.c,self.params.d).to(self.device)
+        gen_params = sum(p.numel() for p in self.gen.parameters())
+        disc_params = sum(p.numel() for p in self.disc.parameters())
+        print("gen params:",gen_params)
+        print("disc params:",disc_params)
+
 
         #apply weights
         self.gen.apply(init_weights)
@@ -83,9 +88,9 @@ class WaveGAN(WGAN):
                                             lr=self.params.lr,
                                             betas=self.params.betas)
     
-        dataset = WaveDataset(self.params.data_path,transform=WaveNormalizer())
+        self.dataset = WaveDataset(self.params.data_path,transform=WaveNormalizer())
         self.dataloader = torch.utils.data.DataLoader(
-                                            dataset=dataset,
+                                            dataset=self.dataset,
                                             batch_size=self.params.batchsize,
                                             shuffle=True)
         
@@ -110,7 +115,7 @@ class WaveGAN(WGAN):
         fake = self.gen(noise).detach().cpu()
         # fake = WaveNormalizer().denormalize_waveform(fake)
         fig, ax = plt.subplots()
-        output_path = os.path.join(self.save_path,self.name, "audio", f"{repr(self.gen)}_{self.name}_epoch_{epoch}.wav")
+        output_path = os.path.join(self.params.save_path,self.name, "audio", f"{repr(self.gen)}_{self.name}_epoch_{epoch}.wav")
         plt.title(f" Epoch: {epoch}")
         data = fake.detach().squeeze(0,1).cpu().numpy()
         t = np.arange(0,len(data))
@@ -118,14 +123,18 @@ class WaveGAN(WGAN):
         # ax.xlabel("time in s")
         # ax.ylabel("Amplitude")
         plt.tight_layout()
-        plt.savefig(os.path.join(self.save_path,self.name,"images",f"result_epoch_{epoch}.png"))
+        plt.savefig(os.path.join(self.params.save_path,self.name,"images",f"result_epoch_{epoch}.png"))
         plt.close()
         sf.write(output_path, data, 16000)
     
-    # def make_audio(self,epoch):
-    #     self.load_models(self.gen, self.disc)
-    #     noise = torch.randn(0,self.params["latent_space"],device=self.params["device"])
-    #     fake = self.gen(noise).detach().cpu()
-    #     sf.write(file=os.path.join(self.save_path,self.name,"audio",f"wave_gan_{self.name}_epoch_{epoch}.wav"),data=fake)
+    def make_audio(self,epoch,num_audios):
+        name = repr(self.gen)
+        self.load_models(name=self.gen)
+        for num in range(num_audios):
+            noise = torch.randn(1,self.params.latent_space,device=self.device)
+            # print(noise.shape)
+            fake = self.gen(noise).detach().cpu().numpy().squeeze()
+            # print(fake.shape)
+            sf.write(file=os.path.join(self.params.save_path,self.name,"fakes",f"wave_gan_{self.name}_epoch_{epoch}_num_{num}.wav"),data=fake,samplerate=16000)
             
   
