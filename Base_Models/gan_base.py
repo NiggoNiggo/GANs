@@ -83,7 +83,7 @@ class GanBase(object):
                 self.validate_gan(epoch)
             if epoch == len(epoch_range)-1:
                 self.save_models(self.gen,self.disc)
-        self.plot_loss()
+        self.clean_models()
     
     def train_one_epoch(self,conditional:bool):
         """Method has to be overwritten for every single Gan implementation
@@ -101,8 +101,6 @@ class GanBase(object):
         """
         raise NotImplementedError
 
-    def validate_gan(self):
-        raise NotImplementedError
 
     
     def _create_directory(self):
@@ -157,7 +155,28 @@ class GanBase(object):
             filename = f"{model.__repr__()}epoch_{self.epoch}.pth"
             torch.save(model.state_dict(),os.path.join(model_path,filename))
     
-    def predict(self,epoch):
+    def clean_models(self):
+        """clean_models, cleans the models and delete some of them just the highes is saved
+        """
+        model_path = os.path.join(self.params.save_path,self.name,"models")
+        pattern = re.compile(r"epoch_\d+")
+        all_files = os.listdir(model_path)
+        sorted_list = sorted(all_files)
+        max_gen = sorted_list[0]
+        max_disc = sorted_list[int(len(sorted_list)/2)]
+        for file in sorted_list:
+            if file != max_gen and file != max_disc:
+                os.remove(os.path.join(model_path,file))
+
+
+    def predict(self,epoch:int):
+        """predict predict and make some images
+
+        Parameters
+        ----------
+        epoch : int
+            current epoch
+        """
         #save path to the image folder
         image_path = os.path.join(self.params.save_path,self.name,"images")
         noise = torch.randn(self.params.batchsize,self.params.latent_space,1,1,device=self.device)
@@ -175,31 +194,7 @@ class GanBase(object):
             elif arg == "gen":
                 print(summary(kwargs[arg],(self.params.latent_space,1,1)))
     
-    def plot_loss(self):
-        fig, ax = plt.subplots(figsize=(10, 6))  
-        for keys, values in self.loss_values.items():
-            print(keys, type(values))
-        print()
-        colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
-        linestyles = ['-', '--', '-.', ':']
-        
-        for i, (loss, values) in enumerate(self.loss_values.items()):
-            color = colors[i % len(colors)]
-            linestyle = linestyles[i % len(linestyles)]
-            ax.plot(range(len(values)), values, label=loss, color=color, linestyle=linestyle, linewidth=2)
-
-        ax.set_title(f"Loss Values for {self.name}", fontsize=16, fontweight='bold')
-        ax.set_xlabel("Iterations", fontsize=14)
-        ax.set_ylabel("Loss Value", fontsize=14)
-        
-        ax.legend(loc='best', fontsize=12)
-        ax.grid(True, linestyle='--', alpha=0.7)
-
-        ax.tick_params(axis='both', which='major', labelsize=12)
-        
-        plt.tight_layout()  # Verbessert die Layout-Automatisierung
-        plt.savefig(os.path.join("images","Loss_Plot.png"))
-        plt.show()
+ 
         
     def make_gif(self,
                  output_path:str,
