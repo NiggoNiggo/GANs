@@ -24,7 +24,7 @@ The Utils folder contains some helper functions that you need in order to get fu
 - CGAN~(not really)
 - SpecGAN
 - WaveGAN
-For the credits to the gan variation see below in the citations
+
 
 
 # Usage
@@ -41,7 +41,6 @@ It is not completely working unless you change your paths in some files. This is
 
 ## Citations
 
-Wenn du diese Implementationen in deiner Forschung oder Projekten verwendest, zitiere bitte die entsprechenden Arbeiten:
 
 - **DCGAN**: Radford, A., Metz, L., & Chintala, S. (2015). *Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks*. arXiv preprint arXiv:1511.06434. [Paper](https://arxiv.org/abs/1511.06434)
 
