@@ -1,12 +1,8 @@
-# from dcgan_discriminator import Discriminator
-# from dcgan_generator import Generator
-# from loss_functions import GANLoss
 import os
 import re
 from PIL import Image
 import random
 
-import librosa
 
 from Base_Models.audio_transformer import WaveNormalizer
 
@@ -34,17 +30,11 @@ class GanBase(object):
             if 'cuda' use gpu if 'cpu' use cpu
         name : str
             name to save the images and models a folder structer is created to this name
-        conditional : bool default False
-            if True the system is trained with conditonal networks, You only have to update the 
-            dataset the models are changes dynamaiclly
-        num_classes : int
-            amount of classes if the GAN is conditional
         """
         self.device = torch.device("cuda" if device == "cuda" else "cpu")
         self.name = name
         self.params = params 
         self.loss_values = {}#contains los values for variable nums of gens and disc
-        # self.params.save_path = r"C:\Users\analf\Desktop\Datasets_And_Results\Results\GANS"
         self.init_models()
         self._create_directory()
         self.start_epoch = 0
@@ -89,6 +79,8 @@ class GanBase(object):
         for epoch in epoch_range:
             self.epoch = epoch
             self.train_one_epoch()
+            if epoch & 10 == 0:
+                self.validate_gan(epoch)
             if epoch == len(epoch_range)-1:
                 self.save_models(self.gen,self.disc)
         self.plot_loss()
@@ -109,6 +101,8 @@ class GanBase(object):
         """
         raise NotImplementedError
 
+    def validate_gan(self):
+        raise NotImplementedError
 
     
     def _create_directory(self):
@@ -172,6 +166,9 @@ class GanBase(object):
             vutils.save_image(vutils.make_grid(fake, padding=2, normalize=True),os.path.join(image_path,f"result_epoch_{epoch}.png"),normalize=True)
     
     def print_summary(self,**kwargs):
+        """print_summary show the torch summary of the given models to use this function do as follows
+        repr(model)=model
+        """
         for arg in kwargs:
             if arg == "disc":
                 print(summary(kwargs[arg],(3,self.params.img_size,self.params.img_size)))
@@ -204,7 +201,18 @@ class GanBase(object):
         plt.savefig(os.path.join("images","Loss_Plot.png"))
         plt.show()
         
-    def make_gif(self,output_path:str,duration=500):
+    def make_gif(self,
+                 output_path:str,
+                 duration:int=500):
+        """make_gif create  gif of images
+
+        Parameters
+        ----------
+        output_path : str
+            path where to save hif
+        duration : int, optional
+            time in ms fo the gif, by default 500
+        """
         all_images = []
         for filename in sorted(os.listdir(os.path.join(self.params.save_path,self.name,"images"))):
             if filename.endswith(".png") or filename.endswith(".jpg") and filename != "Loss_Plot.png":
@@ -276,55 +284,108 @@ class GanBase(object):
         except UnboundLocalError:
             pass            
         
-    def fid_validation(self, real_path, fake_path,epoch:int,num_files:int=100):
+
+
+    def fid_validation(self,
+                    real_path: str,
+                    fake_path: str,
+                    epoch: int,
+                    num_files: int = 100)->torch.tensor:
+        """fid_validation of GANS for audio and images. Return fid_score and print it
+
+        Parameters
+        ----------
+        real_path : str
+            path to the real data
+        fake_path : str
+            path to the fake data
+        epoch : int
+            current epoch
+        num_files : int, optional
+            amount of files to compute fid, by default 100
+
+        Returns
+        -------
+        torch.tensor
+            fid value 
+        """
+        #search fake files
         fake_files = []
-        for r,d,f in os.walk(fake_path):
-            fake_files.extend([os.path.join(r,file) for file in f if file.find(f"epoch_{epoch}")])
-        real_files = librosa.util.find_files(real_path)
+        for r, d, f in os.walk(fake_path):
+            fake_files.extend([os.path.join(r, file) for file in f if file.find(f"epoch_{epoch}")])
+
+        #searcj real files
+        real_files = []
+        for r, d, f in os.walk(real_path):
+            real_files.extend([os.path.join(r, file) for file in f if file.find(f"epoch_{epoch}")])
+
+        #break if no files found
+        if len(fake_files) == 0 or len(real_files) == 0:
+            print("No files found for the specified epoch.")
+            return None
+
+        #shuffle real data
         random.shuffle(real_files)
-        real_file = real_files[:num_files]
+        #just take some samples
+        real_files = real_files[:num_files]
+        fake_files = fake_files[:num_files]
 
         real_specs = []
         fake_specs = []
         
-        apply_spec = torchaudio.transforms.Spectrogram(n_fft=256, hop_length=128)
-        apply_db = torchaudio.transforms.AmplitudeToDB()
-        norm = WaveNormalizer()
-        for real_file, fake_file in zip(real_files, fake_files):
-            real_audio, fs_real = torchaudio.load(real_file)
-            fake_audio, fs_fake = torchaudio.load(fake_file)
+        #do audio processing
+        if self.params.dtype == "audio":
+            apply_spec = torchaudio.transforms.Spectrogram(n_fft=256, hop_length=128)
+            apply_db = torchaudio.transforms.AmplitudeToDB()
+            norm = WaveNormalizer()
 
-            real_audio = norm(real_audio)
+            for real_file, fake_file in zip(real_files, fake_files):
+                try:
+                    real_audio, _ = torchaudio.load(real_file)
+                    fake_audio, _ = torchaudio.load(fake_file)
 
-            # Compute spectrogram
-            S_real = apply_spec(real_audio)
-            S_fake = apply_spec(fake_audio)
-            
-            db_real = apply_db(S_real)
-            db_fake = apply_db(S_fake)
+                    real_audio = norm(real_audio)
 
-            # Repeat channels to match 3-channel input
-            db_real = db_real.repeat(3, 1, 1)
-            db_fake = db_fake.repeat(3, 1, 1)
-            real_specs.append(db_real)
-            fake_specs.append(db_fake)
+                    # Compute spectrogram
+                    S_real = apply_spec(real_audio)
+                    S_fake = apply_spec(fake_audio)
+                    
+                    db_real = apply_db(S_real)
+                    db_fake = apply_db(S_fake)
 
-        
-        # Concatenate all spectrograms along the batch dimension
-        real_specs = torch.stack(real_specs, dim=0).to(torch.uint8)
-        fake_specs = torch.stack(fake_specs,dim=0).to(torch.uint8)
+                    # Repeat channels to match 3-channel input
+                    db_real = db_real.repeat(3, 1, 1)
+                    db_fake = db_fake.repeat(3, 1, 1)
 
-        
+                    real_specs.append(db_real)
+                    fake_specs.append(db_fake)
+                except Exception as e:
+                    print(f"Error processing files {real_file} and {fake_file}: {e}")
+                    continue
+        # do image processing
+        elif self.params.dtype == "image":
+            pass
+
+            # Concatenate all spectrograms along the batch dimension
+            real_data = torch.stack(real_specs, dim=0).to(torch.uint8)
+            fake_data = torch.stack(fake_specs, dim=0).to(torch.uint8)
+
+        #remove fake files
+        for file in os.listdir(fake_path):
+            os.remove(file)
         # Compute FID
-        fid = FrechetInceptionDistance()
-        fid.update(real_specs, real=True)
-        fid.update(fake_specs, real=False)
-        fid_score = fid.compute()
         
-        print(f"The FID Score is {fid_score}")
-            
+        fid = FrechetInceptionDistance()
+        fid.update(real_data, real=True)
+        fid.update(fake_data, real=False)
+        fid_score = fid.compute()
+
+        print(f"The FID Score in epoch {epoch} is {fid_score}")
+        return fid_score
+
+                
 
 
-            
-            
-            
+                
+                
+                
