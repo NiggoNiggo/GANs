@@ -107,10 +107,28 @@ class WaveGAN(WGAN):
     def _train_discriminator(self, real, fake):
         return super()._train_discriminator(real, fake)
     
-   
+    def validate_gan(self,epoch:int):
+        """validate_gan validation routine for gans
+
+        Parameters
+        ----------
+        epoch : int
+            current epoch to validate the gan
+        """
+        self.make_audio(epoch,num_audios=100)
+        real_path = self.dataset.path
+        fake_path = os.path.join(self.params.save_path,self.name,"fakes")
+        self.fid_validation(real_path,fake_path,epoch)
     
     
-    def predict(self,epoch):
+    def predict(self,epoch:int):
+        """predict makes an audio file and a plot
+
+        Parameters
+        ----------
+        epoch : int
+            current epoch
+        """
         noise = self.make_noise(1)
         fake = self.gen(noise).detach().cpu()
         # fake = WaveNormalizer().denormalize_waveform(fake)
@@ -127,14 +145,23 @@ class WaveGAN(WGAN):
         plt.close()
         sf.write(output_path, data, 16000)
     
-    def make_audio(self,epoch,num_audios):
+    def make_audio(self,
+                   epoch:int,
+                   num_audios:int):
+        """make_audi makes a amount of audio files in a given epoch
+
+        Parameters
+        ----------
+        epoch : int
+            current epoch
+        num_audios : int
+            amount of audio samples to generate
+        """
         name = repr(self.gen)
         self.load_models(name=self.gen)
         for num in range(num_audios):
             noise = torch.randn(1,self.params.latent_space,device=self.device)
-            # print(noise.shape)
             fake = self.gen(noise).detach().cpu().numpy().squeeze()
-            # print(fake.shape)
             sf.write(file=os.path.join(self.params.save_path,self.name,"fakes",f"wave_gan_{self.name}_epoch_{epoch}_num_{num}.wav"),data=fake,samplerate=16000)
             
   
