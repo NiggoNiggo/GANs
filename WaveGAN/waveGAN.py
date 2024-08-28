@@ -2,13 +2,9 @@ from WGAN_GP.wgan_pg import WGAN
 import soundfile as sf
 import torch 
 from torch import optim
-import torchvision.utils as vutils
-from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
 from Base_Models.audio_transformer import WaveNormalizer
-# from Utils.parameters import parse_wavegan_arguments
 from WaveGAN.wavegan_dataset import WaveDataset
-
 from WaveGAN.wave_discriminator import WaveDiscriminator
 from WaveGAN.wave_generator import WaveGenerator
 from Utils.utils import init_weights
