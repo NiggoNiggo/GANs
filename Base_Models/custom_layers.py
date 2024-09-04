@@ -154,7 +154,7 @@ class UpscaleConvTranspose1d(nn.Module):
                         stride=self.stride,
                         padding=self.padding,
                         output_padding=self.output_padding,
-                        bias=False)
+                        bias=True)
                 ]
         if not self.last_layer and self.batchnorm:                           #add Batchnorm
             layers.append(nn.BatchNorm1d(num_features=self.out_channels))
@@ -170,7 +170,9 @@ class UpscaleConvTranspose1d(nn.Module):
 
 
     def forward(self,x):
+        # print(x.shape,"in")
         x = self.layer(x)
+        # print(x.shape,"out")
         return x
 
 
@@ -200,7 +202,7 @@ class DownScaleConv1d(nn.Module):
                         kernel_size=self.kernel_size,
                         stride=self.stride,
                         padding=self.padding,
-                        bias=False)
+                        bias=True)
                 ]
         if not self.last_layer and self.batchnorm:                           #add Batchnorm
             layers.append(nn.BatchNorm1d(num_features=self.out_channels))
@@ -216,7 +218,9 @@ class DownScaleConv1d(nn.Module):
         return activation
     
     def forward(self,x):
+        # print(x.shape,"in")
         x = self.layers(x)
+        # print(x.shape,"out")
         return x
 
 
