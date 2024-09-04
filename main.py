@@ -2,6 +2,7 @@ from WGAN_GP.wgan_pg import WGAN
 from DCGAN.dcgan import DCGAN
 from SpecGAN.specGAN import SpecGAN
 from WaveGAN.waveGAN import WaveGAN
+from WaveGAN.conditional_wavegan import ConditionalWaveGAN
 
 from Utils.parameters import parse_gan_type,parse_gan_args
 
@@ -16,7 +17,7 @@ try:
     args = parse_gan_args(current_gan,remaining_args)
     print(f"The following Arguments are loaded for the GAN:{args}")
 except:
-    current_gan = "wavegan"
+    current_gan = "conditional_wavegan"
     args = parse_gan_args(current_gan,[])
     print(f"No Gan type selected. Start Training {current_gan}")
 
@@ -66,11 +67,20 @@ if __name__ == "__main__":
         
         wavegan = WaveGAN(
                         device="cuda",
-                        name="wavegan_chords",
+                        name="conditional_1s",
                         params=args
                         )
         name_gen, name_disc = repr(wavegan.gen), repr(wavegan.disc)
         wavegan.load_models(name_gen=wavegan.gen,name_disc=wavegan.disc)
         wavegan.make_entire_training()
+    
+    elif current_gan == "conditional_wavegan":
         
-
+        wavegan = ConditionalWaveGAN(params=args,
+                                     device="cuda",
+                                     name="conditional_1s",
+                                     num_classes=2)
+        name_gen, name_disc = repr(wavegan.gen), repr(wavegan.disc)
+        wavegan.load_models(name_gen=wavegan.gen,name_disc=wavegan.disc)
+        wavegan.make_entire_training()
+        
