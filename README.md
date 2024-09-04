@@ -25,6 +25,8 @@ The Utils folder contains some helper functions that you need in order to get fu
 - SpecGAN
 - WaveGAN
 
+## WaveGAN 
+Wavegan is implementet with conditional training, that the labels can be given as well to the network. As well you can change the length of the wavegan to 1 or 4s.
 
 
 # Usage
