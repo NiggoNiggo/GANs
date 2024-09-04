@@ -6,12 +6,14 @@ import random
 
 from Base_Models.audio_transformer import WaveNormalizer
 
+import pandas as pd
 import matplotlib.pyplot as plt
 import torch 
 import torchvision.utils as vutils
 from torchsummary import summary
 import torchaudio
 from torchmetrics.image.fid import FrechetInceptionDistance
+from torch.utils.tensorboard import SummaryWriter
 
 class GanBase(object):
     def __init__(self,
@@ -38,7 +40,43 @@ class GanBase(object):
         self.init_models()
         self._create_directory()
         self.start_epoch = 0
+        self.writer = SummaryWriter(os.path.join(self.params.save_path,self.name))
+        self._conditional = self.check_conditional()
+
+    
+    @property
+    def conditional(self):
+        return self._conditional
+    
+    def check_conditional(self):
+        """check_conditional Checks if an instance of this base class is called in conditional or not 
+        conditional constallation. If conditional is true the variable _conditional is changed for the 
+        GAN and probably inheriated by the sub class
+
+        Returns
+        -------
+        bool
+            If True the GAN is conditional if False than not
+        """
+        #check if it is a instance of wavegan
+        from WaveGAN.conditional_wavegan import ConditionalWaveGAN
+        if isinstance(self, ConditionalWaveGAN):
+            return True
+        from WaveGAN.waveGAN import WaveGAN
+        if isinstance(self,WaveGAN):
+            return False
+        #checks if is instance of wgan gp
+        from WGAN_GP.wgan_pg import WGAN
+        if isinstance(self, WGAN):
+            return False
         
+        from CGAN.cgan import CGAN
+        if isinstance(self,CGAN):
+            return True
+        return False
+
+
+
     
     def init_models(self):
         """This methode has to be overwritten in order to initilize your gan models. Generator, Discriminator, loss Functions and optimzers.
@@ -78,12 +116,14 @@ class GanBase(object):
         epoch_range = range(self.start_epoch+1,self.params.epochs+self.start_epoch+1)
         for epoch in epoch_range:
             self.epoch = epoch
+            # self.writer.add_scalar("Epoch",self.epoch)
             self.train_one_epoch()
             if epoch & 10 == 0:
                 self.validate_gan(epoch)
-            if epoch == len(epoch_range)-1:
+            if epoch == len(epoch_range)-1 or epoch & 2 == 0:
                 self.save_models(self.gen,self.disc)
         self.clean_models()
+        self.writer.close()
     
     def train_one_epoch(self,conditional:bool):
         """Method has to be overwritten for every single Gan implementation
@@ -156,17 +196,35 @@ class GanBase(object):
             torch.save(model.state_dict(),os.path.join(model_path,filename))
     
     def clean_models(self):
-        """clean_models, cleans the models and delete some of them just the highes is saved
+        """clean_models, cleans the models and deletes all but the highest (latest) models.
         """
-        model_path = os.path.join(self.params.save_path,self.name,"models")
-        pattern = re.compile(r"epoch_\d+")
+        model_path = os.path.join(self.params.save_path, self.name, "models")
+        pattern = re.compile(r"epoch_(\d+)")  # Regex to extract epoch numbers
+        
         all_files = os.listdir(model_path)
-        sorted_list = sorted(all_files)
-        max_gen = sorted_list[0]
-        max_disc = sorted_list[int(len(sorted_list)/2)]
-        for file in sorted_list:
+        
+        # Extract epoch numbers and pair them with filenames
+        epoch_files = []
+        for file in all_files:
+            match = pattern.search(file)
+            if match:
+                epoch_num = int(match.group(1))  # Extract the epoch number
+                epoch_files.append((epoch_num, file))
+        
+        if not epoch_files:
+            return  # No valid models found
+        
+        # Sort by epoch number
+        epoch_files.sort(reverse=True, key=lambda x: x[0])
+        
+        # The first two are the most recent models
+        max_gen = epoch_files[0][1]
+        max_disc = epoch_files[1][1] if len(epoch_files) > 1 else None
+
+        # Delete all other files
+        for _, file in epoch_files:
             if file != max_gen and file != max_disc:
-                os.remove(os.path.join(model_path,file))
+                os.remove(os.path.join(model_path, file))
 
 
     def predict(self,epoch:int):
@@ -179,9 +237,14 @@ class GanBase(object):
         """
         #save path to the image folder
         image_path = os.path.join(self.params.save_path,self.name,"images")
+        
         noise = torch.randn(self.params.batchsize,self.params.latent_space,1,1,device=self.device)
         with torch.no_grad():
-            fake = self.gen(noise).detach().cpu()
+            if self._conditional:
+                labels = torch.randint(0, self.num_classes, (self.params.batchsize,1,1,1), device=self.device)
+                fake = self.gen(noise,labels).detach().cpu()
+            else:
+                fake = self.gen(noise).detach().cpu()
             vutils.save_image(vutils.make_grid(fake, padding=2, normalize=True),os.path.join(image_path,f"result_epoch_{epoch}.png"),normalize=True)
     
     def print_summary(self,**kwargs):
@@ -311,12 +374,16 @@ class GanBase(object):
 
         #searcj real files
         real_files = []
-        for r, d, f in os.walk(real_path):
-            real_files.extend([os.path.join(r, file) for file in f if file.find(f"epoch_{epoch}")])
+        if real_path.endswith(".csv"):
+            data = pd.read_csv(real_path,index_col=False)
+            real_files = data["Filename"].to_list()
+        else:
+            for r, d, f in os.walk(real_path):
+                real_files.extend([os.path.join(r, file) for file in f if file.find(f"epoch_{epoch}")])
 
         #break if no files found
         if len(fake_files) == 0 or len(real_files) == 0:
-            print("No files found for the specified epoch.")
+            print("No files found for the specified epoch.",len(fake_files),len(real_files))
             return None
 
         #shuffle real data
@@ -327,47 +394,45 @@ class GanBase(object):
 
         real_specs = []
         fake_specs = []
-        
         #do audio processing
         if self.params.dtype == "audio":
+            
             apply_spec = torchaudio.transforms.Spectrogram(n_fft=256, hop_length=128)
             apply_db = torchaudio.transforms.AmplitudeToDB()
-            norm = WaveNormalizer()
+            norm = WaveNormalizer(self.params.audio_size)
 
             for real_file, fake_file in zip(real_files, fake_files):
-                try:
-                    real_audio, _ = torchaudio.load(real_file)
-                    fake_audio, _ = torchaudio.load(fake_file)
+                # try:
+                real_audio, _ = torchaudio.load(real_file)
+                fake_audio, _ = torchaudio.load(fake_file)
 
-                    real_audio = norm(real_audio)
+                real_audio = norm(real_audio)
 
-                    # Compute spectrogram
-                    S_real = apply_spec(real_audio)
-                    S_fake = apply_spec(fake_audio)
-                    
-                    db_real = apply_db(S_real)
-                    db_fake = apply_db(S_fake)
+                # Compute spectrogram
+                S_real = apply_spec(real_audio)
+                S_fake = apply_spec(fake_audio)
+                
+                db_real = apply_db(S_real)
+                db_fake = apply_db(S_fake)
 
-                    # Repeat channels to match 3-channel input
-                    db_real = db_real.repeat(3, 1, 1)
-                    db_fake = db_fake.repeat(3, 1, 1)
+                # Repeat channels to match 3-channel input
+                db_real = db_real.repeat(3, 1, 1)
+                db_fake = db_fake.repeat(3, 1, 1)
 
-                    real_specs.append(db_real)
-                    fake_specs.append(db_fake)
-                except Exception as e:
-                    print(f"Error processing files {real_file} and {fake_file}: {e}")
-                    continue
+                real_specs.append(db_real)
+                fake_specs.append(db_fake)
+                # except Exception as e:
+                #     print(f"Error processing files {real_file} and {fake_file}: {e}")
+                #     continue
         # do image processing
         elif self.params.dtype == "image":
             pass
 
-            # Concatenate all spectrograms along the batch dimension
-            real_data = torch.stack(real_specs, dim=0).to(torch.uint8)
-            fake_data = torch.stack(fake_specs, dim=0).to(torch.uint8)
+        # Concatenate all spectrograms along the batch dimension
+        real_data = torch.stack(real_specs, dim=0).to(torch.uint8)
+        fake_data = torch.stack(fake_specs, dim=0).to(torch.uint8)
 
-        #remove fake files
-        for file in os.listdir(fake_path):
-            os.remove(file)
+        
         # Compute FID
         
         fid = FrechetInceptionDistance()
@@ -375,12 +440,19 @@ class GanBase(object):
         fid.update(fake_data, real=False)
         fid_score = fid.compute()
 
+        #remove fake files
+        for file in os.listdir(fake_path):
+            os.remove(os.path.join(self.params.save_path,self.name,"fakes",file))
+
         print(f"The FID Score in epoch {epoch} is {fid_score}")
+        self.writer.add_scalar("FID",fid_score,global_step=self.epoch)
         return fid_score
+
+
 
                 
 
-
+    
                 
                 
                 
