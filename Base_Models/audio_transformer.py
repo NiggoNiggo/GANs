@@ -55,8 +55,8 @@ class SpecGANTransformer:
 
 #transformer für audio preprocessing für WaveGAN
 class WaveNormalizer:
-    def __init__(self):
-        pass
+    def __init__(self,len_samples:int):
+        self.len_samples = len_samples
 
     def normalize_waveform(self,x):
         x_max = torch.max(x)
@@ -70,12 +70,12 @@ class WaveNormalizer:
         denormalized_x = ((x+1)*(x_max-x_min))/2+x_min
         return denormalized_x
     
-    def make_same_length(self, x, length:int=16384):
+    def make_same_length(self, x):
         current_length = x.shape[-1]
-        if current_length > length:
-            x = x[..., :length]
-        elif current_length < length:
-            padding = torch.zeros(x.shape[:-1] + (length - current_length,))
+        if current_length > self.len_samples:
+            x = x[..., :self.len_samples]
+        elif current_length < self.len_samples:
+            padding = torch.zeros(x.shape[:-1] + (self.len_samples - current_length,))
             x = torch.cat((x, padding), dim=-1)
         return x
 
