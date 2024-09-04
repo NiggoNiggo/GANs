@@ -13,6 +13,8 @@ from DCGAN.dcgan_generator import Generator
 from Base_Models.gan_base import GanBase
 
 
+
+
 class WGAN(GanBase):
     def __init__(self,
                  params,
@@ -22,6 +24,12 @@ class WGAN(GanBase):
         self.params = params 
         self.loss_values["loss_d"] = []
         self.loss_values["loss_g"] = []
+    
+    
+        
+
+
+
 
     def init_models(self):
         # self.params = parse_normal_gans_arguments()
@@ -55,15 +63,17 @@ class WGAN(GanBase):
         transforms = T.Compose([T.ToTensor(),
                                 T.Resize(self.params.img_size),
                                 T.CenterCrop(self.params.img_size)])
-        
-        self.dataloader = DataLoader(CustomDataset(self.params.data_path,transforms),
+        self.dataset = CustomDataset(self.params.data_path,transforms)
+
+        self.dataloader = DataLoader(self.dataset,
                                      batch_size=self.params.batchsize,
                                      shuffle=True)
 
     
     def gradient_penalty(self,
                          real_sample:torch.tensor,
-                         fake_sample:torch.tensor)->float:
+                         fake_sample:torch.tensor,
+                         label:torch.tensor=None)->float:
         """gradient_penalty calcualte the gradient penalty term for the wasserstein distance
 
         Parameters
@@ -72,6 +82,8 @@ class WGAN(GanBase):
             real images
         fake_sample : torch.tensor
             fake images
+        label : torch.tensor
+            label to the real data and fake data to process
 
         Returns
         -------
@@ -85,7 +97,10 @@ class WGAN(GanBase):
         #interpolates the images with th egiven formular of the paper
         interpolates = (alpha * real_sample ) + ((1 - alpha)*fake_sample).requires_grad_(True)
         # interpolates.requires_grad_(True)
-        d_interpolates = self.disc(interpolates)
+        if not self._conditional:
+            d_interpolates = self.disc(interpolates)
+        else:
+            d_interpolates = self.disc(interpolates,label)
         #calculate the gradients
         gradients = torch.autograd.grad(
             outputs=d_interpolates,
@@ -111,18 +126,27 @@ class WGAN(GanBase):
         """
         #printe output von data loader
         for idx, data in tqdm(enumerate(self.dataloader)):
-            batch_size = data.size(0)
             #process the real data in a proper formation
-            real = self._process_real_data(data)
+            if self._conditional:
+                real, labels = self._process_real_data(data)
+            else:
+                real = self._process_real_data(data)
+            batch_size = real.size(0)
+
             loss_d = 0
             #train crit til it is perfect trained
             for num_critic in range(self.params.n_crit):
                 #make a noise to pass through the generator
                 noise = self.make_noise(batch_size)
                 #gen a fake image
-                fake = self.gen(noise)
-                #get the discriminator loss from the train discriminator methode
-                loss_d += self._train_discriminator(real, fake).item()
+                if self._conditional:
+                    fake = self.gen(noise,labels)
+                    loss_d += self._train_discriminator(real, fake, labels).item()
+                else:
+                    fake = self.gen(noise)
+                    loss_d += self._train_discriminator(real, fake).item()
+                    
+                    
             #mean of the loss 
             loss_d = loss_d/self.params.n_crit
             #get the generator loss by the 
@@ -154,12 +178,15 @@ class WGAN(GanBase):
         torch.tensor
             input data of the Discriminator
         """
-        if isinstance(data, list):
+        if self._conditional:
             data, label = data[0], data[1]
             return data.to(self.device), label.to(self.device)
         return data.to(self.device)
     
-    def _train_discriminator(self, real:torch.tensor, fake:torch.tensor)->float:
+    def _train_discriminator(self,
+                            real:torch.tensor,
+                            fake:torch.tensor,
+                            labels:torch.tensor=None)->float:
         """_train_discriminator train the discriminator in the wgan process pipeline
 
         Parameters
@@ -176,17 +203,23 @@ class WGAN(GanBase):
         """
         #zeros gradients
         self.optim_disc.zero_grad()
+        # print("Train disc", real.shape,fake.shape,labels.shape)
         #discriminate real and fake images
-        real_disc = self.disc(real)
-        fake_disc = self.disc(fake.detach())
-        #calculate the gradient penalty
-        gp = self.gradient_penalty(real, fake)
+        if self._conditional:
+            real_disc = self.disc(real,labels)
+            fake_disc = self.disc(fake.detach(),labels)
+            gp = self.gradient_penalty(real, fake, labels)
+        else:
+            real_disc = self.disc(real)
+            fake_disc = self.disc(fake.detach())        #calculate the gradient penalty
+            gp = self.gradient_penalty(real, fake)
         #calculate loss d
         loss_d = -torch.mean(real_disc) + torch.mean(fake_disc) + self.params.lam * gp
         #backpropagation
         loss_d.backward()
         #optimzer step
         self.optim_disc.step()
+        self.writer.add_scalar("loss_d",loss_d.item(),global_step=self.epoch)
         return loss_d
 
     def _train_generator(self,batch_size:int)->float:
@@ -207,12 +240,19 @@ class WGAN(GanBase):
         #generate a noise for fake images
         noise = self.make_noise(batch_size)
         #gen a fake image
-        fake_img = self.gen(noise)
-        #discriminate fake images
-        fake_disc = self.disc(fake_img)
+        if self._conditional:
+            labels = torch.randint(0, self.num_classes, (batch_size,), device=self.device)
+            fake_img = self.gen(noise,labels)
+            #discriminate fake images
+            fake_disc = self.disc(fake_img,labels)
+        else:
+            fake_img = self.gen(noise)
+            fake_disc = self.disc(fake_img)
         fake_loss = -torch.mean(fake_disc)
         #backpropagation
         fake_loss.backward()
+        # add loss generator to tensorboard
+        self.writer.add_scalar("fake_loss",fake_loss.item(),global_step=self.epoch)
         #optimzer step
         self.optim_gen.step()
         return fake_loss
