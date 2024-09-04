@@ -1,44 +1,52 @@
 from Base_Models.custom_layers import UpscaleConvTranspose1d, ReshapeLayer
 from torch import nn
+import torch
 
 class WaveGenerator(nn.Module):
     def __init__(self,
+                 in_channels:int,
                  len_samples:int,
-                 num_layers:int,
                  c:int,
                  d:int):
         super().__init__()
-        self.num_layers = num_layers
         self.len_samples = len_samples
+        self.in_channels = in_channels
         self.d = d
         self.c = c
-        # out_channels = [16,8,4,2,1,self.c]
 
 
         if self.len_samples  == 16384:
-            in_channels = [ 16// (2**i) for i in range(self.num_layers)]
-            out_channels = [16 // (2**i) for i in range(self.num_layers-1)] + [self.c]
-            layers = [nn.Linear(100,256*self.d), 
-                        nn.Unflatten(1, (16*self.d, 16)),
+            in_channels = [1,2,4,8,16]
+            out_channels = [2,4,8,16,16]
+            num_layers = len(in_channels)
+            model_complexity = 1
+            multiplicator = self.d*model_complexity
+            layers = [nn.Linear(self.in_channels,multiplicator*16),#[nn.Linear(100,256*self.d), 
+                        nn.Unflatten(1, (multiplicator,16)),
                         nn.ReLU(True)
                         ]
-        elif self.len_samples == 32768:
-            in_channels = [ 32// (2**i) for i in range(self.num_layers)]
-            out_channels = [32 // (2**i) for i in range(self.num_layers-1)] + [self.c]
-            layers = [nn.Linear(100,256*self.d), 
-                        nn.Unflatten(1, (32*self.d, 32)),
+        elif self.len_samples == 65536:
+            in_channels = [1,2,4,8,16,16]
+            out_channels = [2,4,8,16,16,16]
+            num_layers = len(in_channels)
+            model_complexity = 32#1#32
+            multiplicator = (self.d*model_complexity)
+            layers = [nn.Linear(self.in_channels,16*multiplicator),#)nn.Linear(100,512*self.d), 
+                        nn.Unflatten(1, (multiplicator,16)),
                         nn.ReLU(True)
                         ]
 
-        for num in range(self.num_layers):
-            current_layer = UpscaleConvTranspose1d(in_channels=in_channels[num]*self.d,
-                                         out_channels=out_channels[num]*self.d if (num != self.num_layers-1) else self.c,
+        for num in range(num_layers):
+            factor_in = int(multiplicator// in_channels[num])
+            factor_out = int(multiplicator// out_channels[num])
+            current_layer = UpscaleConvTranspose1d(in_channels=factor_in,
+                                         out_channels=factor_out if (num != num_layers-1) else self.c,
                                          kernel_size=25,
                                          stride=4,
                                          padding=11,
                                          output_padding=1,
                                          batchnorm=False,
-                                         last_layer=(num == self.num_layers-1))
+                                         last_layer=(num == num_layers-1))
             layers.append(current_layer)
         self.model = nn.Sequential(*layers)
 
@@ -49,3 +57,31 @@ class WaveGenerator(nn.Module):
 
     def __repr__(self):
         return "Generator_WaveGAN_"
+    
+
+class ConditionalWaveGenerator(WaveGenerator):
+    def __init__(self,
+                 in_channels:int,
+                 len_samples:int,
+                 c:int,
+                 d:int,
+                 len_classes:int
+                 ):
+        super().__init__(len_samples=len_samples,
+                         in_channels=in_channels+len_classes,
+                         c=c,
+                         d=d)
+         
+        self.len_classes = len_classes
+        # print(self.len_classes)
+        self.embedding = nn.Embedding(100,self.len_classes)
+    
+    def __repr__(self):
+        return "Generator_CWaveGAN_"
+    
+    def forward(self,x,label):
+        # print(x.shape,label.shape,self.model)
+        embedding = self.embedding(label)
+        x = torch.concat([embedding,x],dim=1)
+        x = self.model(x)
+        return x
