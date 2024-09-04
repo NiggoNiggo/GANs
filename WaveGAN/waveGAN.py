@@ -53,6 +53,7 @@ class WaveGAN(WGAN):
                 params,
                 device:str,
                 name:str,
+                
                 ):
         super().__init__(
                          device=device,
@@ -60,12 +61,16 @@ class WaveGAN(WGAN):
                          params=params
                         )
         self.params = params
+
+        
+
+
     def init_models(self):
         """initalize the models and optimzer and the loss function. Additionally the dataset and dataloader are initalized
         the dataset is a custom datasez and can be changes or sdopted to your specific application (The dataset class is in the base models Folder)"""
         
-        self.gen = WaveGenerator(self.params.num_layers,self.params.c,self.params.d).to(self.device)
-        self.disc = WaveDiscriminator(self.params.num_layers,self.params.c,self.params.d).to(self.device)
+        self.gen = WaveGenerator(self.params.latent_space,self.params.audio_size,self.params.c,self.params.d).to(self.device)
+        self.disc = WaveDiscriminator(self.params.audio_size,self.params.c,self.params.d).to(self.device)
         gen_params = sum(p.numel() for p in self.gen.parameters())
         disc_params = sum(p.numel() for p in self.disc.parameters())
         print("gen params:",gen_params)
@@ -84,7 +89,7 @@ class WaveGAN(WGAN):
                                             lr=self.params.lr,
                                             betas=self.params.betas)
     
-        self.dataset = WaveDataset(self.params.data_path,transform=WaveNormalizer())
+        self.dataset = WaveDataset(self.params.data_path,transform=WaveNormalizer(self.params.audio_size))
         self.dataloader = torch.utils.data.DataLoader(
                                             dataset=self.dataset,
                                             batch_size=self.params.batchsize,
@@ -140,6 +145,9 @@ class WaveGAN(WGAN):
         plt.savefig(os.path.join(self.params.save_path,self.name,"images",f"result_epoch_{epoch}.png"))
         plt.close()
         sf.write(output_path, data, 16000)
+        self.writer.add_audio("Fake Audio", fake,global_step=self.epoch,sample_rate=16000)
+        # self.writer.add_image("Wave Form",fake.squeeze(0,1))
+        #add spektrogramm
     
     def make_audio(self,
                    epoch:int,
