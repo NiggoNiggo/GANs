@@ -118,11 +118,12 @@ class GanBase(object):
             self.epoch = epoch
             # self.writer.add_scalar("Epoch",self.epoch)
             self.train_one_epoch()
-            if epoch & 10 == 0:
+            if epoch % 5 == 0:
                 self.validate_gan(epoch)
-            if epoch == len(epoch_range)-1 or epoch & 2 == 0:
+            if epoch == len(epoch_range)-1 or epoch % 2 == 0:
                 self.save_models(self.gen,self.disc)
-        self.clean_models()
+        """ Diese Clean models funktion muss erst nochmal vernünftig getestet werden"""
+        # self.clean_models()
         self.writer.close()
     
     def train_one_epoch(self,conditional:bool):
