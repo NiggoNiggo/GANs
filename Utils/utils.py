@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import librosa
 import random
 import numpy as np
+import pandas as pd
 
 
 def init_weights(m):
@@ -65,5 +66,23 @@ def make_audio_suitable(path):
 
     
     
+def make_conditional_dataset(path_a:str,path_b:str):
+    class_1 = []
+    class_2 = []
+    #add filenames to class 1 list 
+    for r,f,d in os.walk(path_a):
+        class_1.extend([os.path.join(r,file) for file in f if file.endswith(".wav")])
+    df_1 = pd.DataFrame({"Filename":class_1,"Label":[0 for _ in range(len(class_1))]})
+    #add filenames to class 2 list
+    for r,f,d in os.walk(path_b):
+        class_2.extend([os.path.join(r,file) for file in f if file.endswith(".wav")])
+    df_2 = pd.DataFrame({"Filename":class_2,"Label":[1 for _ in range(len(class_2))]})
+    df = pd.concat([df_1,df_2],axis=0)
+    print(df)
 
+
+
+
+    
+        
 
