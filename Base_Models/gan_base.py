@@ -42,6 +42,10 @@ class GanBase(object):
         self.start_epoch = 0
         self.writer = SummaryWriter(os.path.join(self.params.save_path,self.name))
         self._conditional = self.check_conditional()
+        self.scores = {"loss_d":[],
+                       "loss_g":[],
+                       "fid":[]}
+        
 
     
     @property
@@ -118,13 +122,19 @@ class GanBase(object):
             self.epoch = epoch
             # self.writer.add_scalar("Epoch",self.epoch)
             self.train_one_epoch()
-            if epoch % 5 == 0:
-                self.validate_gan(epoch)
+            # self.validate_gan(epoch)
             if epoch == len(epoch_range)-1 or epoch % 2 == 0:
                 self.save_models(self.gen,self.disc)
         """ Diese Clean models funktion muss erst nochmal vernünftig getestet werden"""
         # self.clean_models()
         self.writer.close()
+    
+    def tune_params(self,epochs):
+        for epoch in range(epochs):
+            self.epoch = epoch
+            self.train_one_epoch()
+            score = self.validate_gan(epoch)
+
     
     def train_one_epoch(self,conditional:bool):
         """Method has to be overwritten for every single Gan implementation
@@ -148,15 +158,21 @@ class GanBase(object):
         """Create a folder system to organize all saved models and images ind different folders
         This Method runs automaticly in the init function"""
         #make dir for the given name
-        os.makedirs(os.path.join(self.params.save_path,self.name),exist_ok=True)
-        #list all needed folders
-        if self.params.dtype == "audio":
-            dirs = ["models","images","audio","fakes"]
+        
+        if not os.path.exists(self.params.save_path):
+            save_path = self.name
         else:
-            dirs = ["models","images","fakes"]
+            save_path = os.path.join(self.params.save_path,self.name)
+
+        os.makedirs(save_path,exist_ok=True)
+        #list all needed folders
+        dirs = ["models","images","fakes","optimization"]
+        if self.params.dtype == "audio":
+            dirs += ["audio"]
+    
         #create folder for every listet folder
         for folder in dirs:
-            os.makedirs(os.path.join(self.params.save_path,self.name,folder),exist_ok=True)
+            os.makedirs(os.path.join(save_path,folder),exist_ok=True)
     
     def print_stats(self, **kwargs):
         """Method to print a informational String, after every Epoch. This function take just 
@@ -242,7 +258,7 @@ class GanBase(object):
         noise = torch.randn(self.params.batchsize,self.params.latent_space,1,1,device=self.device)
         with torch.no_grad():
             if self._conditional:
-                labels = torch.randint(0, self.num_classes, (self.params.batchsize,1,1,1), device=self.device)
+                labels = torch.randint(0, self.params.num_classes, (self.params.batchsize,1,1,1), device=self.device)
                 fake = self.gen(noise,labels).detach().cpu()
             else:
                 fake = self.gen(noise).detach().cpu()
@@ -349,7 +365,7 @@ class GanBase(object):
                     real_path: str,
                     fake_path: str,
                     epoch: int,
-                    num_files: int = 100)->torch.tensor:
+                    num_files: int = 500)->torch.tensor:
         """fid_validation of GANS for audio and images. Return fid_score and print it
 
         Parameters
@@ -446,9 +462,15 @@ class GanBase(object):
             os.remove(os.path.join(self.params.save_path,self.name,"fakes",file))
 
         print(f"The FID Score in epoch {epoch} is {fid_score}")
-        self.writer.add_scalar("FID",fid_score,global_step=self.epoch)
+        # self.writer.add_scalar("FID",fid_score,global_step=self.epoch)
+        self.scores["fid"].append(fid_score)
         return fid_score
 
+    
+            
+            
+            
+        
 
 
                 
