@@ -9,6 +9,7 @@ from WaveGAN.wave_discriminator import WaveDiscriminator
 from WaveGAN.wave_generator import WaveGenerator
 from Utils.utils import init_weights
 import os
+import re
 import numpy as np
 
 
@@ -82,11 +83,11 @@ class WaveGAN(WGAN):
         self.disc.apply(init_weights)
 
         self.optim_gen = optim.Adam(params=self.gen.parameters(),
-                                            lr=self.params.lr,
+                                            lr=self.params.lr_g,
                                             betas=self.params.betas)
         #init optimizers Discriminator
         self.optim_disc = optim.Adam(params=self.disc.parameters(),
-                                            lr=self.params.lr,
+                                            lr=self.params.lr_d,
                                             betas=self.params.betas)
     
         self.dataset = WaveDataset(self.params.data_path,transform=WaveNormalizer(self.params.audio_size))
@@ -168,4 +169,12 @@ class WaveGAN(WGAN):
             fake = self.gen(noise).detach().cpu().numpy().squeeze()
             sf.write(file=os.path.join(self.params.save_path,self.name,"fakes",f"wave_gan_{self.name}_epoch_{epoch}_num_{num}.wav"),data=fake,samplerate=16000)
             
-  
+    def valid_afterwards(self,save_path:str):
+        info_dict = {}
+        for file in os.listdir(save_path):
+            if repr(self.disc) in file:
+                continue
+            path = os.path.join(save_path,file)
+            self.gen.load_state_dict(torch.load(path,weights_only=True))
+            epoch = re.compile(r"\d+")
+            self.validate_gan(epoch)
