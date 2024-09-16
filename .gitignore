@@ -7,5 +7,5 @@
 *.wav
 *.pth
 *.csv
-*pyc
+*.pyc
 /__pycache__
