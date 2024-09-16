@@ -5,6 +5,8 @@ from WaveGAN.waveGAN import WaveGAN
 from WaveGAN.conditional_wavegan import ConditionalWaveGAN
 
 from Utils.parameters import parse_gan_type,parse_gan_args
+from Utils.hyperparameter_tuning import RandomSearch
+
 
 from torchsummary import summary
 
@@ -76,11 +78,28 @@ if __name__ == "__main__":
     
     elif current_gan == "conditional_wavegan":
         
-        wavegan = ConditionalWaveGAN(params=args,
-                                     device="cuda",
-                                     name="conditional_1s",
-                                     num_classes=2)
-        name_gen, name_disc = repr(wavegan.gen), repr(wavegan.disc)
-        wavegan.load_models(name_gen=wavegan.gen,name_disc=wavegan.disc)
-        wavegan.make_entire_training()
+        # wavegan = ConditionalWaveGAN(params=args,
+        #                              device="cuda",
+        #                              name="test_new_4s")
         
+        data = {
+            "lr_g":[1e-5,1e-4,3e-4],
+            "lr_d":[1e-5,1e-4,5e-3],
+            "batchsize":[32,64,128],
+            "n_crit":[1,5,10],
+            "lam":[5,10,15]
+            }    
+
+        tuner = RandomSearch(2,data,args,2,ConditionalWaveGAN)
+        tuner.tune_params(name="randomSearchTest",
+                          device="cuda")
+
+
+        # name_gen, name_disc = repr(wavegan.gen), repr(wavegan.disc)
+        # wavegan.load_models(name_gen=wavegan.gen,name_disc=wavegan.disc)
+        # wavegan.make_entire_training()
+        # wavegan.valid_afterwards(r"F:\new_models",mk_audio=True)
+        
+    #fehlt nur noch loss function plotten und fid plotten mit kwargs
+    #early stop bedingung
+    #delete unnessesary files
