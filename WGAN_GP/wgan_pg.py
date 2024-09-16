@@ -156,8 +156,9 @@ class WGAN(GanBase):
                 self.print_stats(epoch=self.epoch,batch_idx=idx,loss_d=loss_d, loss_g=fake_loss)
                 self.predict(self.epoch)
             #append loss to loss dictionary
-            self.loss_values["loss_d"].append(loss_d)
-            self.loss_values["loss_g"].append(fake_loss)
+
+            self.scores["loss_d"].append(loss_d)
+            self.scores["loss_g"].append(fake_loss.item())
 
       
 
@@ -241,7 +242,7 @@ class WGAN(GanBase):
         noise = self.make_noise(batch_size)
         #gen a fake image
         if self._conditional:
-            labels = torch.randint(0, self.num_classes, (batch_size,), device=self.device)
+            labels = torch.randint(0, self.params.num_classes, (batch_size,), device=self.device)
             fake_img = self.gen(noise,labels)
             #discriminate fake images
             fake_disc = self.disc(fake_img,labels)
@@ -256,4 +257,6 @@ class WGAN(GanBase):
         #optimzer step
         self.optim_gen.step()
         return fake_loss
+    
+        
         
