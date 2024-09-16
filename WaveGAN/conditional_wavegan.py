@@ -1,4 +1,4 @@
-import os
+import os,re
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,6 +13,7 @@ from WaveGAN.wavegan_dataset import ConditionalWaveDataset
 
 from Base_Models.audio_transformer import WaveNormalizer
 
+from WaveGAN.waveGAN import WaveGAN
 
 from Utils.utils import init_weights
 
@@ -21,10 +22,10 @@ class ConditionalWaveGAN(WGAN):
     def __init__(self,
                  params,
                  device,
-                 name,
-                 num_classes
+                 name
+                #  num_classes
                  ):
-        self.num_classes = num_classes
+        # self.num_classes = num_classes
         super().__init__(params=params,
                          device=device,
                          name=name)
@@ -33,8 +34,8 @@ class ConditionalWaveGAN(WGAN):
         """initalize the models and optimzer and the loss function. Additionally the dataset and dataloader are initalized
         the dataset is a custom datasez and can be changes or sdopted to your specific application (The dataset class is in the base models Folder)"""
         
-        self.gen = ConditionalWaveGenerator(self.params.latent_space,self.params.audio_size,self.params.c,self.params.d,self.num_classes).to(self.device)
-        self.disc = ConditionalWavediscriminator(self.params.audio_size,self.params.c,self.params.d,self.num_classes).to(self.device)
+        self.gen = ConditionalWaveGenerator(self.params.latent_space,self.params.audio_size,self.params.c,self.params.d,self.params.num_classes).to(self.device)
+        self.disc = ConditionalWavediscriminator(self.params.audio_size,self.params.c,self.params.d,self.params.num_classes).to(self.device)
         gen_params = sum(p.numel() for p in self.gen.parameters())
         disc_params = sum(p.numel() for p in self.disc.parameters())
         print("gen params:",gen_params)
@@ -46,11 +47,11 @@ class ConditionalWaveGAN(WGAN):
         self.disc.apply(init_weights)
 
         self.optim_gen = optim.Adam(params=self.gen.parameters(),
-                                            lr=self.params.lr,
+                                            lr=self.params.lr_g,
                                             betas=self.params.betas)
         #init optimizers Discriminator
         self.optim_disc = optim.Adam(params=self.disc.parameters(),
-                                            lr=self.params.lr,
+                                            lr=self.params.lr_d,
                                             betas=self.params.betas)
     
         self.dataset = ConditionalWaveDataset(self.params.data_path,transform=WaveNormalizer(self.params.audio_size))
@@ -99,11 +100,11 @@ class ConditionalWaveGAN(WGAN):
         epoch : int
             current epoch to validate the gan
         """
-        self.make_audio(epoch,num_audios=100)
+        self.make_audio(epoch,num_audios=len(self.dataset))
         real_path = self.dataset.path
         fake_path = os.path.join(self.params.save_path,self.name,"fakes")
-        print(real_path)
-        self.fid_validation(real_path,fake_path,epoch)
+        # fid_score = self.fid_validation(real_path,fake_path,epoch)
+        # return fid_score
     
     
 
@@ -117,7 +118,7 @@ class ConditionalWaveGAN(WGAN):
             Current epoch
         """
         # Erstelle Rauschen und Labels für jede Klasse
-        num_classes = self.num_classes
+        num_classes = self.params.num_classes
         noise = self.make_noise(num_classes)  # Erzeuge Rauschen für jede Klasse
         labels = torch.arange(num_classes).to(self.device)  # Erzeuge Labels von 0 bis num_classes-1
         
@@ -139,6 +140,11 @@ class ConditionalWaveGAN(WGAN):
             t = np.arange(0, len(data)) / 16000  # Zeitachse in Sekunden
             
             ax.plot(t, data)
+            # string = f"Epoch {epoch} "
+            # current_score = self.scores["fid"][epoch]
+            # string += f"FID = {current_score} "
+            # print(string)
+            # ax.set_title(string)
             ax.set_xlabel("Time (s)")
             ax.set_ylabel("Amplitude")
             plt.tight_layout()
@@ -169,14 +175,28 @@ class ConditionalWaveGAN(WGAN):
             amount of audio samples to generate
         """
         name = repr(self.gen)
-        self.load_models(name=self.gen)
+        # self.load_models(name=self.gen)
         for num in range(num_audios):
             noise = torch.randn(1,self.params.latent_space,device=self.device)
             if self._conditional:
-                labels = torch.randint(0, self.num_classes, (1,), device=self.device)
+                labels = torch.randint(0, self.params.num_classes, (1,), device=self.device)
                 fake = self.gen(noise,labels).detach().cpu().numpy().squeeze()
             else:
                 fake = self.gen(noise).detach().cpu().numpy().squeeze()
             sf.write(file=os.path.join(self.params.save_path,self.name,"fakes",f"wave_gan_{self.name}_epoch_{epoch}_num_{num}.wav"),data=fake,samplerate=16000)
             
   
+    def valid_afterwards(self,
+                         save_path:str,
+                         mk_audio=False):
+        info_dict = {}
+        for file in os.listdir(save_path):
+            if repr(self.disc) in file:
+                continue
+            path = os.path.join(save_path,file)
+            self.gen.load_state_dict(torch.load(path,weights_only=True))
+            epoch = re.search(r"\d+",path).group(0)
+            print(epoch)
+            self.validate_gan(epoch)
+            if mk_audio:
+                self.predict(epoch)
