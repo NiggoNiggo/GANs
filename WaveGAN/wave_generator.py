@@ -1,4 +1,4 @@
-from Base_Models.custom_layers import UpscaleConvTranspose1d, ReshapeLayer
+from Base_Models.custom_layers import UpscaleConvTranspose1d
 from torch import nn
 import torch
 
@@ -19,9 +19,9 @@ class WaveGenerator(nn.Module):
             in_channels = [1,2,4,8,16]
             out_channels = [2,4,8,16,16]
             num_layers = len(in_channels)
-            model_complexity = 1
+            model_complexity = 16
             multiplicator = self.d*model_complexity
-            layers = [nn.Linear(self.in_channels,multiplicator*16),#[nn.Linear(100,256*self.d), 
+            layers = [nn.Linear(self.in_channels,multiplicator*16),
                         nn.Unflatten(1, (multiplicator,16)),
                         nn.ReLU(True)
                         ]
@@ -31,7 +31,7 @@ class WaveGenerator(nn.Module):
             num_layers = len(in_channels)
             model_complexity = 32#1#32
             multiplicator = (self.d*model_complexity)
-            layers = [nn.Linear(self.in_channels,16*multiplicator),#)nn.Linear(100,512*self.d), 
+            layers = [nn.Linear(self.in_channels,16*multiplicator),
                         nn.Unflatten(1, (multiplicator,16)),
                         nn.ReLU(True)
                         ]
@@ -73,14 +73,12 @@ class ConditionalWaveGenerator(WaveGenerator):
                          d=d)
          
         self.len_classes = len_classes
-        # print(self.len_classes)
         self.embedding = nn.Embedding(100,self.len_classes)
     
     def __repr__(self):
         return "Generator_CWaveGAN_"
     
     def forward(self,x,label):
-        # print(x.shape,label.shape,self.model)
         embedding = self.embedding(label)
         x = torch.concat([embedding,x],dim=1)
         x = self.model(x)
