@@ -30,17 +30,20 @@ def parse_gan_args(selcted_gan, remaining_args):
     elif selcted_gan == "wavegan" or selcted_gan == "conditional_wavegan":
         parser.add_argument('--d', type=int, default=64, help='Model complexity')
         parser.add_argument('--c', type=int, default=1, help='Num channels')
-        parser.add_argument('--epochs', type=int, default=20, help='Anzahl der Epochen')
+        parser.add_argument('--epochs', type=int, default=50, help='Anzahl der Epochen')
         parser.add_argument('--data_path', type=str,default=r"labeled_filenames.csv", help='Pfad zu den Trainingsdaten')
         parser.add_argument('--batchsize', type=int, default=64, help='Batch-Größe für das Training')
         parser.add_argument('--latent_space', type=int, default=100, help='Dimension des latenten Raums')
-        parser.add_argument('--lr', type=float, default=2e-5, help='Lernrate für SpecGAN')
-        parser.add_argument('--audio_size', type=int, default=16384,choices=[16384,65536], help='Length of the audio signal')
+        parser.add_argument('--lr_g', type=float, default=2e-5, help='Lernrate Generator in Wavegan')
+        parser.add_argument('--lr_d', type=float, default=2e-5, help='Lernrate für Criticer in Wavegan')
+        parser.add_argument('--audio_size', type=int, default=65536,choices=[16384,65536], help='Length of the audio signal')
         parser.add_argument('--lam', type=float, default=10, help='Lambda für WGAN')
         parser.add_argument('--n_crit', type=int, default=5, help='Anzahl der Kritiker bei WGAN')
         parser.add_argument('--alpha', type=float, default=0.0001, help='Alpha für WGAN')
         parser.add_argument('--betas', type=float, nargs=2, default=(0.5, 0.9), help='Betas für den Adam-Optimizer bei WGAN')
         parser.add_argument('--dtype', type=str, default='audio', help='Datentyp (Bild oder Audio)')
+        if selcted_gan == "conditional_wavegan":
+            parser.add_argument("--num_classes",type=int,default=2, help="Amount of classes if conditional")
     elif selcted_gan == "specgan":
         parser.add_argument('--num_layers', type=int, default=5, help='Num layers')
         parser.add_argument('--d', type=int, default=64, help='Model complexity')
