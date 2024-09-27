@@ -145,25 +145,35 @@ class WGAN(GanBase):
                 else:
                     fake = self.gen(noise)
                     loss_d += self._train_discriminator(real, fake).item()
-                    
+                  
                     
             #mean of the loss 
             loss_d = loss_d/self.params.n_crit
             #get the generator loss by the 
             fake_loss = self._train_generator(batch_size)
             #print some stats 
+            
+            fid = self.scores["fid"][-1] if len(self.scores["fid"]) != 0 else "9999"
             if idx % 100 == 0:
-                self.print_stats(epoch=self.epoch,batch_idx=idx,loss_d=loss_d, loss_g=fake_loss)
+
+                self.print_stats(epoch=self.epoch,batch_idx=idx,loss_d=loss_d, loss_g=fake_loss,fid=fid)
                 self.predict(self.epoch)
             #append loss to loss dictionary
-
-            self.scores["loss_d"].append(loss_d)
-            self.scores["loss_g"].append(fake_loss.item())
-
+            
+        self.scores["loss_d"].append(loss_d)
+        self.scores["loss_g"].append(fake_loss.item())
+        try:
+            self.validate_gan()
+        except NotImplementedError:
+            pass
       
 
         if self.epoch % 15 == 0:
             self.save_models(self.gen,self.disc)
+
+
+
+    
     
     def _process_real_data(self, data:torch.tensor):
         """_process_real_data is a methode to process the real data from the dataloader to 

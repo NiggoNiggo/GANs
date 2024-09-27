@@ -83,18 +83,27 @@ if __name__ == "__main__":
                                      name="testing")
         
         data = {
-            "lr_g":[1e-5,1e-4,3e-4],
-            "lr_d":[1e-5,1e-4,5e-3],
+            "lr_g":[1e-4,1e-5,1e-6,2e-5],
+            "lr_d":[1e-4,1e-5,1e-6,2e-5],
             "batchsize":[32,64,128],
-            "n_crit":[1,5,10],
-            "lam":[5,10,15]
+            "n_crit":list(range(1,10)),
+            "lam":list(range(1,15)),
+             "d":[1,8,16]
             }    
+        tuner = RandomSearch("Optimized_GAN",10,data,args,8,ConditionalWaveGAN)
+        tuner.tune_params(device="cuda")
+        results = tuner.check_conditions(r"results_hypertuning.csv")
 
         # tuner = RandomSearch(2,data,args,2,ConditionalWaveGAN)
         # tuner.tune_params(name="randomSearchTest",
         #                   device="cuda")
 
 
+        # wavegan = ConditionalWaveGAN(params=args,#results
+                                    #  device="cuda",
+                                    #  name="test_noe_new")
+        # print(results)
+###-----------------
         # name_gen, name_disc = repr(wavegan.gen), repr(wavegan.disc)
         # wavegan.load_models(name_gen=wavegan.gen,name_disc=wavegan.disc)
         wavegan.make_entire_training()
@@ -102,4 +111,4 @@ if __name__ == "__main__":
         
     #fehlt nur noch loss function plotten und fid plotten mit kwargs
     #early stop bedingung
-    #delete unnessesary files
+    #dann tensorboard

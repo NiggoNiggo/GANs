@@ -40,8 +40,15 @@ class ConditionalWaveGAN(WGAN):
         disc_params = sum(p.numel() for p in self.disc.parameters())
         print("gen params:",gen_params)
         print("disc params:",disc_params)
+        # dummy_labels = torch.randint(0, self.params.num_classes, (self.params.batchsize,), device=self.device)
+        # dummy_gen_input = (self.make_noise(self.params.batchsize),dummy_labels)
 
+        # dummy_disc_input = (torch.randn((self.params.batchsize,self.params.audio_size,1),device=self.device),dummy_labels)
 
+        # for k in dummy_disc_input:
+        #     print(k.shape)
+        # self.writer.add_graph(self.gen, dummy_gen_input)
+        # self.writer.add_graph(self.disc, dummy_disc_input)
         #apply weights
         self.gen.apply(init_weights)
         self.disc.apply(init_weights)
@@ -59,6 +66,7 @@ class ConditionalWaveGAN(WGAN):
                                             dataset=self.dataset,
                                             batch_size=self.params.batchsize,
                                             shuffle=True)
+        print(len(self.dataset),"len dataset")
         
             
     def train_one_epoch(self):
@@ -92,7 +100,7 @@ class ConditionalWaveGAN(WGAN):
                             labels:torch.tensor=None)->float:
         return super()._train_discriminator(real,fake,labels)
     
-    def validate_gan(self,epoch:int):
+    def validate_gan(self):#,epoch:int):
         """validate_gan validation routine for gans
 
         Parameters
@@ -100,11 +108,12 @@ class ConditionalWaveGAN(WGAN):
         epoch : int
             current epoch to validate the gan
         """
-        self.make_audio(epoch,num_audios=len(self.dataset))
+        
+        self.make_audio(self.epoch,num_audios=len(self.dataset))
         real_path = self.dataset.path
         fake_path = os.path.join(self.params.save_path,self.name,"fakes")
-        # fid_score = self.fid_validation(real_path,fake_path,epoch)
-        # return fid_score
+        fid_score = self.fid_validation(real_path,fake_path,self.epoch)
+        self.scores["fid"].append(float(fid_score.item()))
     
     
 
