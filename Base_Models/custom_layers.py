@@ -2,6 +2,28 @@ from torch import nn
 import torch
 
 class UpscaleLayer(nn.Module):
+    """Upscale layer is a custom implementation to create a Layer that upsamples the signal with the neccessary 
+        parameters (almost like pytorch). A *2D Convolutional Transpose Layer* is initialized.
+
+        Parameters
+        ----------
+        in_channels : int
+            In channels to the Concolutional layer
+        out_channels : int
+            out channels from the Convolutional Layer
+        kernel_size : int
+            Kernel size of the Convolutional Layer
+        stride : int
+            Stride of the Convolutional Layer
+        padding : int
+            Padding of the Convolutional Layer
+        output_padding : int, optional
+            Outout padding of the convolutional Layer, by default 0
+        batchnorm : int, optional
+            True if batchnorn is needed else False, by default True
+        last_layer : _type_, optional
+            If Last Layer sometimes the activation function may differ, by default None
+        """
     def __init__(self,
                  in_channels:int,
                  out_channels:int,
@@ -12,6 +34,7 @@ class UpscaleLayer(nn.Module):
                  batchnorm:int=True,
                  last_layer=None,
                     ):
+        
         super().__init__()
         #if last layer change to Tanh activation else stay at ReLU
         activation_function = nn.Tanh() if last_layer else nn.ReLU()
@@ -39,6 +62,29 @@ class UpscaleLayer(nn.Module):
     
 
 class DownscaleLayer(nn.Module):
+    """DownscaleLayer down samples with a Covolutional Layer. This class takes nearly the same arguments as torch 
+    *conv2d Layer* and additional the option if it is the last layer, baucause often there are some modified activations.
+    Batchnorm is optional and can be implementet as well.
+
+    Parameters
+    ----------
+    in_channels : int
+        In channels to the Concolutional layer
+    out_channels : int
+        out channels from the Convolutional Layer
+    kernel_size : int
+        Kernel size of the Convolutional Layer
+    stride : int
+        Stride of the Convolutional Layer
+    padding : int
+        Padding of the Convolutional Layer
+    output_padding : int, optional
+        Outout padding of the convolutional Layer, by default 0
+    batchnorm : int, optional
+        True if batchnorn is needed else False, by default True
+    last_layer : _type_, optional
+        If Last Layer sometimes the activation function may differ, by default None
+    """
     def __init__(self,
                  in_channels:int,
                  out_channels:int,
@@ -86,6 +132,28 @@ class DownscaleLayer(nn.Module):
     
 
 class CriticLayer(DownscaleLayer):
+    """This Layer is predefined for a Wasserstein Criticer Layer. This class is a subclass of the *DownscaleLayer* and therfore
+        takes the same arguments.
+
+        Parameters
+        ----------
+        in_channels : int
+            In channels to the Concolutional layer
+        out_channels : int
+            out channels from the Convolutional Layer
+        kernel_size : int
+            Kernel size of the Convolutional Layer
+        stride : int
+            Stride of the Convolutional Layer
+        padding : int
+            Padding of the Convolutional Layer
+        output_padding : int, optional
+            Outout padding of the convolutional Layer, by default 0
+        batchnorm : int, optional
+            True if batchnorn is needed else False, by default True
+        last_layer : _type_, optional
+            If Last Layer sometimes the activation function may differ, by default None
+        """
     def __init__(self,
                  in_channels:int,
                  out_channels:int,
@@ -114,8 +182,15 @@ class CriticLayer(DownscaleLayer):
     
 
 class ReshapeLayer(nn.Module):
+    """ReshapeLayer, is able to reshape the given input into the given shape and outputs the input in the new shape
+
+        Parameters
+        ----------
+        output_shape : tuple
+            Desired shape of the input data
+        """
     def __init__(self,
-                 output_shape):
+                 output_shape:tuple):
         super().__init__()
         self.output_shape = output_shape
     
@@ -125,13 +200,35 @@ class ReshapeLayer(nn.Module):
 
 
 class UpscaleConvTranspose1d(nn.Module):
+    """UpscaleConvTransposed1d, up samples the data in one dimension. This is like the UpscaleCon2d Layer with the only
+        difference, that it take a 1d data as input (like Audio raw files)
+
+        Parameters
+        ----------
+        in_channels : int
+            In channels to the Concolutional layer
+        out_channels : int
+            out channels from the Convolutional Layer
+        kernel_size : int
+            Kernel size of the Convolutional Layer
+        stride : int
+            Stride of the Convolutional Layer
+        padding : int
+            Padding of the Convolutional Layer
+        output_padding : int, optional
+            Outout padding of the convolutional Layer, by default 0
+        batchnorm : int, optional
+            True if batchnorn is needed else False, by default True
+        last_layer : _type_, optional
+            If Last Layer sometimes the activation function may differ, by default None
+        """
     def __init__(self,
-                 in_channels,
-                 out_channels,
-                 kernel_size,
-                 stride,
-                 padding,
-                 output_padding,
+                 in_channels:int,
+                 out_channels:int,
+                 kernel_size:int,
+                 stride:int,
+                 padding:int,
+                 output_padding:int,
                  batchnorm:bool=False,
                  last_layer:bool=False):
         super().__init__()
@@ -177,12 +274,34 @@ class UpscaleConvTranspose1d(nn.Module):
 
 
 class DownScaleConv1d(nn.Module):
+    """DownscaleConvTransposed1d, down samples the data in one dimension. This is like the DownscaleCon2d Layer with the only
+        difference, that it take a 1d data as input (like Audio raw files)
+
+        Parameters
+        ----------
+        in_channels : int
+            In channels to the Concolutional layer
+        out_channels : int
+            out channels from the Convolutional Layer
+        kernel_size : int
+            Kernel size of the Convolutional Layer
+        stride : int
+            Stride of the Convolutional Layer
+        padding : int
+            Padding of the Convolutional Layer
+        output_padding : int, optional
+            Outout padding of the convolutional Layer, by default 0
+        batchnorm : int, optional
+            True if batchnorn is needed else False, by default True
+        last_layer : _type_, optional
+            If Last Layer sometimes the activation function may differ, by default None
+        """
     def __init__(self,
-                 in_channels,
-                 out_channels,
-                 kernel_size,
-                 stride,
-                 padding,
+                 in_channels:int,
+                 out_channels:int,
+                 kernel_size:int,
+                 stride:int,
+                 padding:int,
                  batchnorm:bool=False,
                  last_layer:bool=False):
         super().__init__()
@@ -226,7 +345,16 @@ class DownScaleConv1d(nn.Module):
 
 
 class PhaseShuffle(nn.Module):
-    def __init__(self,n):
+
+    def __init__(self,n:int):
+        """PhaseShuffle, is from WaveGAN to shuffle the input data from the Discriminator and avoid artefacts (this is my own 
+        createn, so no guarantee, that is correctly implementet)
+
+        Parameters
+        ----------
+        n : int
+            value of Phaseshuffel
+        """
         super().__init__()
         self.n = n
 
