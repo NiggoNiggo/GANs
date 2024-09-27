@@ -2,9 +2,11 @@ import os
 import re
 from PIL import Image
 import random
+import numpy as np
 
 
 from Base_Models.audio_transformer import WaveNormalizer
+from Utils.logging import TrainingLogger
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -36,15 +38,17 @@ class GanBase(object):
         self.device = torch.device("cuda" if device == "cuda" else "cpu")
         self.name = name
         self.params = params 
+        self.writer = SummaryWriter(os.path.join(self.params.save_path,self.name,"logs/test"))
         self.loss_values = {}#contains los values for variable nums of gens and disc
         self.init_models()
         self._create_directory()
         self.start_epoch = 0
-        self.writer = SummaryWriter(os.path.join(self.params.save_path,self.name))
         self._conditional = self.check_conditional()
         self.scores = {"loss_d":[],
                        "loss_g":[],
                        "fid":[]}
+        path = os.path.join(self.params.save_path,self.name,"optimization",self.name +"_optimization.txt")
+        self.logger = TrainingLogger(path)
         
 
     
@@ -79,6 +83,8 @@ class GanBase(object):
             return True
         return False
 
+    def validate_gan(self):
+        raise NotImplementedError
 
 
     
@@ -117,7 +123,9 @@ class GanBase(object):
         self.params["epochs]. As well some statistic functions are called and saved during the training
         """
         #range from epochs to make the training
+        print(self.start_epoch)
         epoch_range = range(self.start_epoch+1,self.params.epochs+self.start_epoch+1)
+        print(len(epoch_range))
         for epoch in epoch_range:
             self.epoch = epoch
             # self.writer.add_scalar("Epoch",self.epoch)
@@ -126,14 +134,14 @@ class GanBase(object):
             if epoch == len(epoch_range)-1 or epoch % 2 == 0:
                 self.save_models(self.gen,self.disc)
         """ Diese Clean models funktion muss erst nochmal vernünftig getestet werden"""
-        # self.clean_models()
+        self.clean_models()
         self.writer.close()
     
     def tune_params(self,epochs):
         for epoch in range(epochs):
             self.epoch = epoch
             self.train_one_epoch()
-            score = self.validate_gan(epoch)
+            score = self.validate_gan()
 
     
     def train_one_epoch(self,conditional:bool):
@@ -195,9 +203,27 @@ class GanBase(object):
         stats_string = ""
         #add every positional argument in the string
         for arg in kwargs:
-            stats_string += f"{arg} = {kwargs[arg]} "
+            stats_string += f"{arg.title()} = {kwargs[arg]} "
+        self.logger.add_content(stats_string)
         print(stats_string)
     
+    def plot_loss(self):
+        fig, ax = plt.subplots(nrows=len(self.scores.keys()))
+        for idx, (metric, loss) in enumerate(self.scores.items()):
+            #x is the axis for the epochs in which the loss was calcualted
+            x = np.linspace(self.start_epoch,self.epoch,self.params.epochs+self.start_epoch+1,len(loss))
+            print(x,loss)
+            print(loss)
+            print(len(loss),len(x))
+            ax[idx].set_title(metric)
+            ax[idx].plot(x,loss,label=f"{metric}")
+            ax[idx].legend()
+            ax[idx].grid()
+        end_epoch = self.start_epoch + len(x)
+        plt.savefig(os.path.join(self.params.save_path,"optimization",f"Loss_epoch_{self.start_epoch}_{end_epoch}.png"))
+        plt.show()
+
+
     def save_models(self,*args):
         """This function takes just pytorch models in a various amount The model need to have a
         .__repr__() Methode implementet, that describe the type like "Discriminator_DCGAN_" to get 
@@ -209,39 +235,44 @@ class GanBase(object):
         model_path = os.path.join(self.params.save_path,self.name,"models")
         for model in args:
             #hier noch ne Abfrage ob der Type richtig ist
-            filename = f"{model.__repr__()}epoch_{self.epoch}.pth"
+            fid = np.round(self.scores["fid"][-1],2) if len(self.scores["fid"]) != 0 else "999"
+            filename = f"{model.__repr__()}epoch_{self.epoch}_fid_{fid:.2f}.pth"
             torch.save(model.state_dict(),os.path.join(model_path,filename))
     
     def clean_models(self):
-        """clean_models, cleans the models and deletes all but the highest (latest) models.
-        """
+        """Cleans the models and deletes all but the top ten (latest) models for generator and discriminator based on FID scores."""
         model_path = os.path.join(self.params.save_path, self.name, "models")
-        pattern = re.compile(r"epoch_(\d+)")  # Regex to extract epoch numbers
-        
+        pattern = re.compile(r"fid_(\d+\.\d+)")  # Regex to extract FID scores
+
         all_files = os.listdir(model_path)
-        
-        # Extract epoch numbers and pair them with filenames
-        epoch_files = []
+
+        # Extract FID scores and pair them with filenames
+        fid_files = []
         for file in all_files:
             match = pattern.search(file)
             if match:
-                epoch_num = int(match.group(1))  # Extract the epoch number
-                epoch_files.append((epoch_num, file))
-        
-        if not epoch_files:
+                fid_score = float(match.group(1))  # Extract the FID score as float
+                fid_files.append((fid_score, file))
+
+        if not fid_files:
             return  # No valid models found
-        
-        # Sort by epoch number
-        epoch_files.sort(reverse=True, key=lambda x: x[0])
-        
-        # The first two are the most recent models
-        max_gen = epoch_files[0][1]
-        max_disc = epoch_files[1][1] if len(epoch_files) > 1 else None
+
+        # Sort by FID score (ascending)
+        fid_files.sort(key=lambda x: x[0])
+
+        # Keep the top 10 for generator and discriminator
+        top_gen_files = fid_files[:10]  # Top 10 models
+        top_disc_files = fid_files[10:20] if len(fid_files) > 10 else fid_files[10:]
+
+        # Create a set of files to keep
+        files_to_keep = {file for _, file in top_gen_files + top_disc_files}
 
         # Delete all other files
-        for _, file in epoch_files:
-            if file != max_gen and file != max_disc:
+        for _, file in fid_files:
+            if file not in files_to_keep:
+                print(f"Deleting model: {file}")
                 os.remove(os.path.join(model_path, file))
+
 
 
     def predict(self,epoch:int):
@@ -438,6 +469,8 @@ class GanBase(object):
 
                 real_specs.append(db_real)
                 fake_specs.append(db_fake)
+
+                self.writer.add_image("Spektrum Fake Image",db_fake)
                 # except Exception as e:
                 #     print(f"Error processing files {real_file} and {fake_file}: {e}")
                 #     continue
@@ -452,19 +485,23 @@ class GanBase(object):
         
         # Compute FID
         
-        fid = FrechetInceptionDistance()
-        fid.update(real_data, real=True)
-        fid.update(fake_data, real=False)
+        fid = FrechetInceptionDistance().to(self.device)
+        fid.update(real_data.to(self.device), real=True)
+        fid.update(fake_data.to(self.device), real=False)
         fid_score = fid.compute()
 
         #remove fake files
         for file in os.listdir(fake_path):
             os.remove(os.path.join(self.params.save_path,self.name,"fakes",file))
 
-        print(f"The FID Score in epoch {epoch} is {fid_score}")
+        print(f"The FID Score in epoch {epoch} is {fid_score.cpu()}")
         # self.writer.add_scalar("FID",fid_score,global_step=self.epoch)
-        self.scores["fid"].append(fid_score)
+        fid_score = fid_score.cpu().numpy()
         return fid_score
+    
+    def early_stopping(self):
+        #soll prüfen, ab wann der fid score nicht mehr signifikant besser wird
+        pass
 
     
             

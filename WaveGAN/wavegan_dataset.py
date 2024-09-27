@@ -39,7 +39,7 @@ class ConditionalWaveDataset(Dataset):
         super().__init__()
         self.path = path#to a csv file that contains path and label
         self.transform = transform
-        self.data = pd.read_csv(self.path,index_col=False)
+        self.data = pd.read_csv(self.path,index_col=False)[:None]
 
     def __len__(self):
         return len(self.data)
@@ -48,7 +48,7 @@ class ConditionalWaveDataset(Dataset):
         return len(pd.unique(self.data))
 
     def __getitem__(self,idx):
-        data, fs = torchaudio.load(self.data.Filename[idx])
+        data, fs = torchaudio.load(os.path.normpath(self.data.Filename[idx]))
         label = self.data.Label[idx]
         data = self.transform(data)
         return data, label
