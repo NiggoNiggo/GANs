@@ -78,9 +78,9 @@ if __name__ == "__main__":
     
     elif current_gan == "conditional_wavegan":
         
-        # wavegan = ConditionalWaveGAN(params=args,
-        #                              device="cuda",
-        #                              name="test_new_4s")
+        wavegan = ConditionalWaveGAN(params=args,
+                                     device="cuda",
+                                     name="testing")
         
         data = {
             "lr_g":[1e-5,1e-4,3e-4],
@@ -90,14 +90,14 @@ if __name__ == "__main__":
             "lam":[5,10,15]
             }    
 
-        tuner = RandomSearch(2,data,args,2,ConditionalWaveGAN)
-        tuner.tune_params(name="randomSearchTest",
-                          device="cuda")
+        # tuner = RandomSearch(2,data,args,2,ConditionalWaveGAN)
+        # tuner.tune_params(name="randomSearchTest",
+        #                   device="cuda")
 
 
         # name_gen, name_disc = repr(wavegan.gen), repr(wavegan.disc)
         # wavegan.load_models(name_gen=wavegan.gen,name_disc=wavegan.disc)
-        # wavegan.make_entire_training()
+        wavegan.make_entire_training()
         # wavegan.valid_afterwards(r"F:\new_models",mk_audio=True)
         
     #fehlt nur noch loss function plotten und fid plotten mit kwargs
