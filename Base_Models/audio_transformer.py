@@ -18,7 +18,9 @@ class SpecGANTransformer:
         return data 
 
 
-    def __call__(self, data,fs):
+    def __call__(self, 
+                 data,
+                 fs:int):
         data = data.float()
         if fs != self.target_fs:
             resample =  T.Resample(orig_freq=fs,new_freq=self.target_fs)
@@ -55,13 +57,25 @@ class SpecGANTransformer:
 
 #transformer für audio preprocessing für WaveGAN
 class WaveNormalizer:
-    def __init__(self,len_samples:int):
+    """ Normalize the waveform of the given input.
+    --------
+    *input* torch.tensor
+        input tensor of the audio raw waveform, that needs to be adoptet
+        to the shape of len_samples. If the Sample is longer it is cuttet,
+        else zero padded
+    --------
+    *output* 
+        Waveform normalized and corrected in the length
+    """
+    def __init__(self,
+                 len_samples:int):
         self.len_samples = len_samples
 
     def normalize_waveform(self,x):
+        "normalize the waveform of the data to -1,1"
         x_max = torch.max(x)
         x_min = torch.min(x)
-        normalized_x = (2*(x-x_min))/(x_max-x_min)-1
+        normalized_x = 2*(x-x_min)/(x_max-x_min)-1
         return normalized_x
 
     def denormalize_waveform(self,x):
@@ -81,6 +95,18 @@ class WaveNormalizer:
 
 
     def __call__(self,x):
+        """__call__ normalize the data and cut or pad it to the necessary length
+
+        Parameters
+        ----------
+        x : torch.tensor
+            data to normalise
+
+        Returns
+        -------
+        torch.tensor
+            normalized data
+        """
         x = self.normalize_waveform(x)
         x = self.make_same_length(x)
         return x
