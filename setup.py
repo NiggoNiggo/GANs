@@ -8,7 +8,7 @@ def read_requirements():
 
 setup(
     name="GAN_Implementations",  # Name des Pakets
-    version="2.1.1",  # Version deines Pakets
+    version="2.1.2",  # Version deines Pakets
     packages=find_packages(),  # Automatische Paketfindung
     install_requires=read_requirements(),  # Abhängigkeiten aus der requirements.txt
     author="Nicolas Becker",
