@@ -17,13 +17,13 @@ class WaveGenerator(nn.Module):
             model complexity to add some neuros per layer
         """
     def __init__(self,
-                 in_channels:int,
+                 latent_space:int,
                  len_samples:int,
                  c:int,
                  d:int):
         super().__init__()
         self.len_samples = len_samples
-        self.in_channels = in_channels
+        self.latent_space = latent_space
         self.d = d
         self.c = c
 
@@ -34,7 +34,7 @@ class WaveGenerator(nn.Module):
             num_layers = len(in_channels)
             model_complexity = 1
             multiplicator = self.d*model_complexity
-            layers = [nn.Linear(self.in_channels,multiplicator*16),
+            layers = [nn.Linear(self.latent_space,multiplicator*16),
                         nn.Unflatten(1, (multiplicator,16)),
                         nn.ReLU(True)
                         ]
@@ -45,7 +45,7 @@ class WaveGenerator(nn.Module):
             num_layers = len(in_channels)
             model_complexity = 32#1#32
             multiplicator = (self.d*model_complexity)
-            layers = [nn.Linear(self.in_channels,16*multiplicator),
+            layers = [nn.Linear(self.latent_space,16*multiplicator),
                         nn.Unflatten(1, (multiplicator,16)),
                         nn.ReLU(True)
                         ]
