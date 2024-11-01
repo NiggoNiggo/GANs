@@ -120,7 +120,8 @@ class WaveGAN(WGAN):
         self.make_audio(epoch,num_audios=100)
         real_path = self.dataset.path
         fake_path = os.path.join(self.params.save_path,self.name,"fakes")
-        self.fid_validation(real_path,fake_path,epoch)
+        fid_score = self.fid_validation(real_path,fake_path,self.epoch)
+        self.scores["fid"].append(float(fid_score.item()))
     
     
     def predict(self,epoch:int):
@@ -170,6 +171,13 @@ class WaveGAN(WGAN):
             sf.write(file=os.path.join(self.params.save_path,self.name,"fakes",f"wave_gan_{self.name}_epoch_{epoch}_num_{num}.wav"),data=fake,samplerate=16000)
             
     def valid_afterwards(self,save_path:str):
+        """valid_afterwards is able to validate a bunch of models after the training process
+
+        Parameters
+        ----------
+        save_path : str
+            folder where the files to the saved models are
+        """
         info_dict = {}
         for file in os.listdir(save_path):
             if repr(self.disc) in file:
