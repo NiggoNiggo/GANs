@@ -289,8 +289,6 @@ class DownScaleConv1d(nn.Module):
             Stride of the Convolutional Layer
         padding : int
             Padding of the Convolutional Layer
-        output_padding : int, optional
-            Outout padding of the convolutional Layer, by default 0
         batchnorm : int, optional
             True if batchnorn is needed else False, by default True
         last_layer : _type_, optional
