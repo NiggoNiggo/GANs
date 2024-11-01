@@ -155,7 +155,6 @@ class WGAN(GanBase):
             
             fid = self.scores["fid"][-1] if len(self.scores["fid"]) != 0 else "9999"
             if idx % 100 == 0:
-
                 self.print_stats(epoch=self.epoch,batch_idx=idx,loss_d=loss_d, loss_g=fake_loss,fid=fid)
                 self.predict(self.epoch)
             #append loss to loss dictionary
@@ -163,7 +162,7 @@ class WGAN(GanBase):
         self.scores["loss_d"].append(loss_d)
         self.scores["loss_g"].append(fake_loss.item())
         try:
-            self.validate_gan()
+            self.validate_gan(self.epoch)
         except NotImplementedError:
             pass
       
