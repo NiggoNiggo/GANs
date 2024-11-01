@@ -1,9 +1,7 @@
 from torch.utils.data import Dataset
 import os
 import torchaudio
-import librosa
 import matplotlib.pyplot as plt
-import numpy as np
 import librosa
 import pandas as pd
 import soundfile as sf
@@ -11,8 +9,17 @@ import soundfile as sf
 
 
 class WaveDataset(Dataset):
+    """Dataset for WaveGAN.
+
+        Parameters
+        ----------
+        path : str
+            path to the folder with the training material
+        transform : torchvision.transforms
+            transformation to do on the audio files
+        """
     def __init__(self,
-                 path,
+                 path:str,
                  transform):
         super().__init__()
         self.path = path
@@ -33,13 +40,22 @@ class WaveDataset(Dataset):
         return data
 
 class ConditionalWaveDataset(Dataset):
+    """Dataset for conditional WaveGAN.
+
+    Parameters
+    ----------
+    path : str
+        path to the folder with the training material
+    transform : torchvision.transforms
+        transformation to do on the audio files
+    """
     def __init__(self,
                  path,
                  transform):
         super().__init__()
         self.path = path#to a csv file that contains path and label
         self.transform = transform
-        self.data = pd.read_csv(self.path,index_col=False)[:None]
+        self.data = pd.read_csv(os.path.normpath(self.path))[:None]
 
     def __len__(self):
         return len(self.data)
