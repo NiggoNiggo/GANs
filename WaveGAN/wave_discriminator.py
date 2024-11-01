@@ -4,6 +4,17 @@ import torch
 
 
 class WaveDiscriminator(nn.Module):
+    """WaveDiscriminator is a Discriminator network for a waveGAN.
+
+        Parameters
+        ----------
+        len_samples : int
+            length of audio signal in samples must be 16384 or 65536
+        c : int
+            Channels of the audio signal, in most cases default == 1
+        d : int
+            model complexity to add some neuros per layer
+        """
     def __init__(self,
                  num_samples:int,
                  c:int,
@@ -13,24 +24,26 @@ class WaveDiscriminator(nn.Module):
         self.c = c
         self.num_samples = num_samples
         layers = []
-        if self.num_samples == 65536:
-            in_channels = [1,1,2,4,8,16]
-            out_channels = [1,2,4,8,16,32]
-            num_layers = len(in_channels)
-            model_complexity = 32   
-            self.linear_shape = 16*model_complexity*self.d
-            
+        
+        num_layers = len(in_channels)
+        #1 s of audio
         if self.num_samples == 16384:
             in_channels = [self.c,1,2,4,8]
             out_channels = [1,2,4,8,16]
-            num_layers = len(in_channels)
             model_complexity = 16#16#1
+            self.linear_shape = 16*model_complexity*self.d
+
+        #4 s of audio 
+        if self.num_samples == 65536:
+            in_channels = [1,1,2,4,8,16]
+            out_channels = [1,2,4,8,16,32]
+            model_complexity = 32   
+            #shape of the fully conected layer at the beginnign of the network
             self.linear_shape = 16*model_complexity*self.d
 
         for num in range(num_layers):
             factor_in = self.d*in_channels[num]
             factor_out = self.d*out_channels[num]
-            # print(factor_in,factor_out)
             current_layer = DownScaleConv1d(in_channels=factor_in if (num != 0) else self.c,
                                          out_channels=factor_out,
                                          kernel_size=25,
@@ -42,13 +55,14 @@ class WaveDiscriminator(nn.Module):
             layers.append(current_layer)
             layers.append(PhaseShuffle(2))
         self.model = nn.Sequential(*layers)
+        #output shape just one value that is the wasserstein disctance of the distributiion of genrated and train data 
         self.fc = nn.Linear(self.linear_shape,1)
     
 
     def forward(self,x):
         # print(self.model)
         x =  self.model(x)
-        print(x.shape)
+        # print(x.shape)
         x = x.reshape(x.size(0), self.linear_shape)
         x = self.fc(x)
         return x
@@ -58,6 +72,19 @@ class WaveDiscriminator(nn.Module):
         return "Discriminator_WaveGAN_"
 
 class ConditionalWavediscriminator(WaveDiscriminator):
+    """conditionalWaveDiscriminator is a Discriminator network for a waveGAN with respect to a condition.
+
+        Parameters
+        ----------
+        len_samples : int
+            length of audio signal in samples must be 16384 or 65536
+        c : int
+            Channels of the audio signal, in most cases default == 1
+        d : int
+            model complexity to add some neuros per layer
+        num_classes : int
+            amount of classes 
+        """
     def __init__(self,
                  num_samples:int,
                  c:int,
@@ -77,7 +104,7 @@ class ConditionalWavediscriminator(WaveDiscriminator):
             kernel_size=25,
             stride=4,
             padding=11,
-            batchnorm=False,
+            batchnorm=True,
             last_layer=False
         )
 
