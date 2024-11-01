@@ -236,7 +236,7 @@ class GanBase(object):
         for model in args:
             #hier noch ne Abfrage ob der Type richtig ist
             fid = np.round(self.scores["fid"][-1],2) if len(self.scores["fid"]) != 0 else "999"
-            filename = f"{model.__repr__()}epoch_{self.epoch}_fid_{fid:.2f}.pth"
+            filename = f"{model.__repr__()}epoch_{self.epoch}_fid_{float(fid):.2f}.pth"
             torch.save(model.state_dict(),os.path.join(model_path,filename))
     
     def clean_models(self):
