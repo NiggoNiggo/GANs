@@ -27,11 +27,11 @@ class WaveGenerator(nn.Module):
         self.d = d
         self.c = c
 
-        num_layers = len(in_channels)
         #this is for 1 seconds of audio data 
         if self.len_samples  == 16384:
             in_channels = [1,2,4,8,16]
             out_channels = [2,4,8,16,16]
+            num_layers = len(in_channels)
             model_complexity = 1
             multiplicator = self.d*model_complexity
             layers = [nn.Linear(self.in_channels,multiplicator*16),
@@ -42,6 +42,7 @@ class WaveGenerator(nn.Module):
         elif self.len_samples == 65536:
             in_channels = [1,2,4,8,16,16]
             out_channels = [2,4,8,16,16,16]
+            num_layers = len(in_channels)
             model_complexity = 32#1#32
             multiplicator = (self.d*model_complexity)
             layers = [nn.Linear(self.in_channels,16*multiplicator),
