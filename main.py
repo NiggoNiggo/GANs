@@ -72,15 +72,18 @@ if __name__ == "__main__":
         
         wavegan = WaveGAN(
                         device="cuda",
-                        name="normal_new_test",
+                        # name="normal_new_test",
                         # name="low_params",
+                        # name="test_1s_new",
+                        name=args.name,
                         params=args
                         )
-        name_gen, name_disc = repr(wavegan.gen), repr(wavegan.disc)
-        wavegan.load_models(name_gen=wavegan.gen,name_disc=wavegan.disc)
+        # name_gen, name_disc = repr(wavegan.gen), repr(wavegan.disc)
+        # wavegan.load_models(name_gen=wavegan.gen,name_disc=wavegan.disc)
         # wavegan.load_models(name_disc=r"H:\Results\GANS\normal_new_test\models\Discriminator_WaveGAN_epoch_246_fid_86.44.pth",
         #                     name_gen=r"H:\Results\GANS\normal_new_test\models\Generator_WaveGAN_epoch_246_fid_86.44.pth")
         wavegan.make_entire_training()
+        wavegan.make_gif("WaveGAN_Car.gif",1000)
     
     elif current_gan == "conditional_wavegan":
         
