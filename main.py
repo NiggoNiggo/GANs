@@ -75,7 +75,7 @@ if __name__ == "__main__":
                         # name="normal_new_test",
                         # name="low_params",
                         # name="test_1s_new",
-                        name=args.name,
+                        name="fuck_2",
                         params=args
                         )
         # name_gen, name_disc = repr(wavegan.gen), repr(wavegan.disc)
