@@ -373,16 +373,13 @@ class GanBase(object):
         if len(sorted_models) >= 2:
             self.disc.load_state_dict(torch.load(os.path.join(self.params.save_path,self.name,"models",sorted_models[-1]),weights_only=True))
             self.gen.load_state_dict(torch.load(os.path.join(self.params.save_path,self.name,"models",sorted_models[-2]),weights_only=True))
-        # print(f"Generator loaded model: {sorted_models[-2]}")
-        # print(f"Discriminator loaded model: {sorted_models[-1]}")
-        #return epoch from filename
-        try:
-            match = re.search(r"\d+", sorted_models[-1])
-            if match:
-                epoch = match.group()
-                self.start_epoch = int(epoch)
-        except UnboundLocalError:
-            pass            
+            try:
+                match = re.search(r"\d+", sorted_models[-1])
+                if match:
+                    epoch = match.group()
+                    self.start_epoch = int(epoch)
+            except UnboundLocalError:
+                pass            
         
 
 
