@@ -336,16 +336,6 @@ class GanBase(object):
         all_images[0].save(output_path, save_all=True, append_images=all_images[1:], duration=duration, loop=0)
         print(f"GIF saved as {output_path}")
     
-    # def load_models(self,name_gen,name_disc):
-    #     self.gen.load_state_dict(torch.load(name_gen,weights_only=True))
-    #     self.disc.load_state_dict(torch.load(name_disc,weights_only=True))
-    #     try:
-    #         match = re.search(r"\d+", name_gen)
-    #         if match:
-    #             epoch = match.group()
-    #             self.start_epoch = int(epoch)
-    #     except UnboundLocalError:
-    #         pass 
         
     def load_models(self,**kwargs):
         """Methode to load torch models. You have to give the model.__repr__() (repr(model)) string
