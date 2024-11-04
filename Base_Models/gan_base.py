@@ -335,6 +335,17 @@ class GanBase(object):
         output_path = os.path.join(self.params.save_path,output_path)
         all_images[0].save(output_path, save_all=True, append_images=all_images[1:], duration=duration, loop=0)
         print(f"GIF saved as {output_path}")
+    
+    # def load_models(self,name_gen,name_disc):
+    #     self.gen.load_state_dict(torch.load(name_gen,weights_only=True))
+    #     self.disc.load_state_dict(torch.load(name_disc,weights_only=True))
+    #     try:
+    #         match = re.search(r"\d+", name_gen)
+    #         if match:
+    #             epoch = match.group()
+    #             self.start_epoch = int(epoch)
+    #     except UnboundLocalError:
+    #         pass 
         
     def load_models(self,**kwargs):
         """Methode to load torch models. You have to give the model.__repr__() (repr(model)) string
@@ -367,23 +378,16 @@ class GanBase(object):
         
         #eliminate duplicates
         types_models = set(types_models)
-        for types in types_models:
-            #sort the list to the fourth last element == epoch the first element
-            groups[types] = sorted(all_models,key= lambda x: int(re.search(r"\d+",x).group()))[-1]
-        
-
-        
-        for half_name, filename in groups.items():
-            #arg name listed to give the model (gen or disc etc.) to this function
-            for arg, model in kwargs.items():
-                #arg == repr(mode) 
-                # model == Model Class like Discriminator Generator or something similar
-                if half_name in repr(model) and half_name in filename:
-                    #load the model
-                    model.load_state_dict(torch.load(os.path.join(self.params.save_path,self.name,"models",filename), weights_only=True))
+        #sort the list to the fourth last element == epoch the first element
+        sorted_models = sorted(all_models,key= lambda x: int(re.search(r"\d+",x).group()))[:-2]
+       
+        self.disc.load_state_dict(torch.load(os.path.join(self.params.save_path,self.name,"models",sorted_models[-1]),weights_only=True))
+        self.gen.load_state_dict(torch.load(os.path.join(self.params.save_path,self.name,"models",sorted_models[-2]),weights_only=True))
+        # print(f"Generator loaded model: {sorted_models[-2]}")
+        # print(f"Discriminator loaded model: {sorted_models[-1]}")
         #return epoch from filename
         try:
-            match = re.search(r"\d+", filename)
+            match = re.search(r"\d+", sorted_models[-1])
             if match:
                 epoch = match.group()
                 self.start_epoch = int(epoch)
