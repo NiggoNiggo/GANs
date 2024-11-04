@@ -77,10 +77,10 @@ class WaveGAN(WGAN):
         print("gen params:",gen_params)
         print("disc params:",disc_params)
 
-
+        
         #apply weights
-        self.gen.apply(init_weights)
-        self.disc.apply(init_weights)
+        # self.gen.apply(init_weights)
+        # self.disc.apply(init_weights)
 
         self.optim_gen = optim.Adam(params=self.gen.parameters(),
                                             lr=self.params.lr_g,
