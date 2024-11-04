@@ -24,11 +24,6 @@ class WGAN(GanBase):
         self.params = params 
         self.loss_values["loss_d"] = []
         self.loss_values["loss_g"] = []
-    
-    
-        
-
-
 
 
     def init_models(self):
