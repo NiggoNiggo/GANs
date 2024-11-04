@@ -25,11 +25,12 @@ class WaveDiscriminator(nn.Module):
         self.num_samples = num_samples
         layers = []
         
-        num_layers = len(in_channels)
+        
         #1 s of audio
         if self.num_samples == 16384:
             in_channels = [self.c,1,2,4,8]
             out_channels = [1,2,4,8,16]
+            num_layers = len(in_channels)
             model_complexity = 16#16#1
             self.linear_shape = 16*model_complexity*self.d
 
@@ -37,6 +38,7 @@ class WaveDiscriminator(nn.Module):
         if self.num_samples == 65536:
             in_channels = [1,1,2,4,8,16]
             out_channels = [1,2,4,8,16,32]
+            num_layers = len(in_channels)
             model_complexity = 32   
             #shape of the fully conected layer at the beginnign of the network
             self.linear_shape = 16*model_complexity*self.d
