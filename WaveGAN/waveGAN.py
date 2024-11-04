@@ -164,7 +164,7 @@ class WaveGAN(WGAN):
             amount of audio samples to generate
         """
         name = repr(self.gen)
-        self.load_models(name=self.gen)
+        self.load_models(False)
         for num in range(num_audios):
             noise = torch.randn(1,self.params.latent_space,device=self.device)
             fake = self.gen(noise).detach().cpu().numpy().squeeze()
