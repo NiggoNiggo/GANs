@@ -123,16 +123,13 @@ class GanBase(object):
         self.params["epochs]. As well some statistic functions are called and saved during the training
         """
         #range from epochs to make the training
-        print(self.start_epoch)
         epoch_range = range(self.start_epoch+1,self.params.epochs+self.start_epoch+1)
-        print(len(epoch_range))
         for epoch in epoch_range:
             self.epoch = epoch
             # self.writer.add_scalar("Epoch",self.epoch)
             self.train_one_epoch()
-            # self.validate_gan(epoch)
-            if epoch == len(epoch_range)-1 or epoch % 2 == 0:
-                self.save_models(self.gen,self.disc)
+            #save model every epoch
+            self.save_models(self.gen,self.disc)
         """ Diese Clean models funktion muss erst nochmal vernünftig getestet werden"""
         self.clean_models()
         self.writer.close()
@@ -346,8 +343,6 @@ class GanBase(object):
             if you wanna know which model was loaded, default True at init models but during the
             trainin it is False
         """
-        # define a dictionary that contains loaded filenames
-        to_load = {}
         #get correct path
         path = os.path.join(self.params.save_path,self.name,"models")
         #list all models
@@ -383,6 +378,8 @@ class GanBase(object):
                     self.gen.load_state_dict(torch.load(os.path.join(path,file),weights_only=True))
                     if verbose:
                         print("Generator is loaded:\t",file)
+            #set first epoch after loding to the epoch that was calcualtet + 1
+            self.start_epoch = max_num + 1 
                         
                 
 
