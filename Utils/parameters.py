@@ -11,6 +11,7 @@ def parse_gan_type():
 
 def parse_gan_args(selcted_gan, remaining_args):
     parser = argparse.ArgumentParser(description="Training von GANS")
+    parser.add_argument("--name",type=str,default="GAN",help="name of the string to name the project and folder name")
 
     if selcted_gan in ["wgan","cgan","dcgan"]:
         parser.add_argument('--num_layers', type=int, default=6, help='Num layers')
