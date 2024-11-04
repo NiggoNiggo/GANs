@@ -370,9 +370,9 @@ class GanBase(object):
         types_models = set(types_models)
         #sort the list to the fourth last element == epoch the first element
         sorted_models = sorted(all_models,key= lambda x: int(re.search(r"\d+",x).group()))[:-2]
-       
-        self.disc.load_state_dict(torch.load(os.path.join(self.params.save_path,self.name,"models",sorted_models[-1]),weights_only=True))
-        self.gen.load_state_dict(torch.load(os.path.join(self.params.save_path,self.name,"models",sorted_models[-2]),weights_only=True))
+        if len(sorted_models) >= 2:
+            self.disc.load_state_dict(torch.load(os.path.join(self.params.save_path,self.name,"models",sorted_models[-1]),weights_only=True))
+            self.gen.load_state_dict(torch.load(os.path.join(self.params.save_path,self.name,"models",sorted_models[-2]),weights_only=True))
         # print(f"Generator loaded model: {sorted_models[-2]}")
         # print(f"Discriminator loaded model: {sorted_models[-1]}")
         #return epoch from filename
