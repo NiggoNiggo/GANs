@@ -337,50 +337,54 @@ class GanBase(object):
         print(f"GIF saved as {output_path}")
     
         
-    def load_models(self,**kwargs):
-        """Methode to load torch models. You have to give the model.__repr__() (repr(model)) string
-        with respect to the model itself.
-        --------
-        Example Usage : 
-        -------------
-        load_models(str(repr(gen))=gen,str(repr(disc))=disc)
-        
-        Common Arguments : **kwargs
-        -------------
-        repr(gen) = gen
-        repr(disc) = disc
-        .... 
-        with this merthode it is possible to load any model for any gan that is implemented here
-        with a __repr__ methode.
-        
+    def load_models(self,verbose:bool=False):
+        """load_models load models with the highest epoch trained in the models folder
+
+        Parameters
+        ----------
+        verbose : bool
+            if you wanna know which model was loaded, default True at init models but during the
+            trainin it is False
         """
+        # define a dictionary that contains loaded filenames
+        to_load = {}
         #get correct path
         path = os.path.join(self.params.save_path,self.name,"models")
         #list all models
         all_models = os.listdir(path)
-        
-        groups = {}
-        #helper list to save all types of models
-        types_models = []
+        #define lowest start value
+        max_num = -1
+        #iterate through every filename queal name to models here
         for model in all_models:
-            types_models.append(model.split("_")[0])
-            
-        
-        #eliminate duplicates
-        types_models = set(types_models)
-        #sort the list to the fourth last element == epoch the first element
-        sorted_models = sorted(all_models,key= lambda x: int(re.search(r"\d+",x).group()))[:-2]
-        if len(sorted_models) >= 2:
-            self.disc.load_state_dict(torch.load(os.path.join(self.params.save_path,self.name,"models",sorted_models[-1]),weights_only=True))
-            self.gen.load_state_dict(torch.load(os.path.join(self.params.save_path,self.name,"models",sorted_models[-2]),weights_only=True))
-            try:
-                match = re.search(r"\d+", sorted_models[-1])
-                if match:
-                    epoch = match.group()
-                    self.start_epoch = int(epoch)
-            except UnboundLocalError:
-                pass            
-        
+            #find pattern aof first occuring numbers == epochs
+            match = re.search(r"\d+",model)
+            if match:
+                #if match was found  make it a integer
+                num = int(match.group())
+                #compare to the before highest value
+                if num > max_num:
+                    #make it the new highest value
+                    max_num = num        
+        if max_num == -1:
+            print("No model loaded because there aren't files to load")
+            return 
+        else:
+            #now find the filenames of the highest trained models
+            for file in all_models:
+                #compare if lowest epoch found 
+                match = re.search(f"epoch_{max_num}",file,re.IGNORECASE)
+                #if Discrimiator in the file load it directly
+                if match and "Discriminator" in file:
+                    self.disc.load_state_dict(torch.load(os.path.join(path,file),weights_only=True))
+                    if verbose:
+                        print("Discriminator is loaded:\t",file)
+                #if Generator in dile load it directly
+                elif match and "Generator" in file:
+                    self.gen.load_state_dict(torch.load(os.path.join(path,file),weights_only=True))
+                    if verbose:
+                        print("Generator is loaded:\t",file)
+                        
+                
 
 
     def fid_validation(self,
