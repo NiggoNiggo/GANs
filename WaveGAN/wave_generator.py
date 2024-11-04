@@ -32,7 +32,7 @@ class WaveGenerator(nn.Module):
             in_channels = [1,2,4,8,16]
             out_channels = [2,4,8,16,16]
             num_layers = len(in_channels)
-            model_complexity = 1
+            model_complexity = 16#1
             multiplicator = self.d*model_complexity
             layers = [nn.Linear(self.latent_space,multiplicator*16),
                         nn.Unflatten(1, (multiplicator,16)),
